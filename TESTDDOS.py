@@ -515,17 +515,34 @@ class GhostIPSpoofer:
         for cidr in self.cdn_ranges:
             try:
                 network = ipaddress.ip_network(cidr, strict=False)
-                count = min(10000, size // len(self.cdn_ranges))
-                for ip in random.sample(list(network.hosts()), count):
-                    pool.append(str(ip))
+                # Calculate maximum possible samples for this CIDR
+                max_samples = network.num_addresses - 2  # Exclude network and broadcast
+                if max_samples <= 0:
+                    continue
+                    
+                # Determine how many IPs to take from this CIDR
+                count = min(10000, size // len(self.cdn_ranges), max_samples)
+                
+                # Generate random IPs from this CIDR
+                ip_list = list(network.hosts())
+                if count > len(ip_list):
+                    count = len(ip_list)
+                    
+                if count > 0:
+                    sample_ips = random.sample(ip_list, count)
+                    for ip in sample_ips:
+                        pool.append(str(ip))
             except Exception as e:
                 print(f"{Color.YELLOW}[-] Error generating IPs from {cidr}: {str(e)}{Color.END}")
                 continue
         
-        # Fill with random IPs
-        while len(pool) < size:
-            pool.append(f"{random.randint(1,255)}.{random.randint(1,255)}."
-                        f"{random.randint(1,255)}.{random.randint(1,255)}")
+        # Fill with random IPs if needed
+        remaining = size - len(pool)
+        if remaining > 0:
+            print(f"{Color.YELLOW}[!] Adding {remaining} random IPs to reach pool size{Color.END}")
+            for _ in range(remaining):
+                ip = f"{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}"
+                pool.append(ip)
         
         random.shuffle(pool)
         return pool[:size]
