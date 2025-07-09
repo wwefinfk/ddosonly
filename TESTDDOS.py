@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
-# YOGI X_ZXPLOIT ULTIMATE - Project Armageddon Pro Max Ultra+ (True Ghost Edition)
+#!/usr/bin/env python
+# YOGI X_ZXPLOIT ULTIMATE - Project Armageddon Pro Max Ultra+ (True Ghost Edition) v1.0
 # PERINGATAN: Dilarang keras menyalahgunakan tools!!
 
 import os
@@ -366,7 +366,7 @@ def install_dependencies():
         'requests': 'requests',
         'brotli': 'brotli',
         'cryptography': 'cryptography',
-        'dnspython': 'dns',
+        'dns': 'dnspython',
         'win32api': 'pywin32;platform_system=="Windows"'
     }
     
@@ -380,7 +380,7 @@ def install_dependencies():
             missing_modules.append(package)
     
     if missing_modules:
-        print(f"{Color.RED}[-] Missing modules: {', '.join([m.split(';')[0] for m in missing_modules)}{Color.END}")
+        print(f"{Color.RED}[-] Missing modules: {', '.join([m.split(';')[0] for m in missing_modules])}{Color.END}")
         confirm = input(f"{Color.YELLOW}[?] Install required dependencies? (y/n): {Color.END}")
         if confirm.lower() == 'y':
             print(f"{Color.CYAN}[+] Installing dependencies...{Color.END}")
